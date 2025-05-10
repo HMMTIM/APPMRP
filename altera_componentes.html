@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relatório Onde é Usado e Substituição</title>
+
+  <!-- Estilos CSS -->
+  <style>
+    /* Variáveis CSS para reutilização */
+    :root {
+      --primary-color: #0854a0;
+      --primary-hover: #0a4d8c;
+      --secondary-color: #f0f3f6;
+      --border-color: #d4d4d4;
+      --text-color: #333;
+      --text-secondary: #666;
+      --success-color: #107e3e;
+      --success-hover: #0d6e36;
+      --danger-color: #bb0000;
+      --danger-hover: #a30000;
+      --warning-color: #e9730c;
+      --header-bg: #354a5f;
+      --shadow-light: 0 2px 10px rgba(0, 0, 0, 0.08);
+      --shadow-medium: 0 4px 15px rgba(0, 0, 0, 0.1);
+      --spacing-sm: 8px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+      --font-size-base: 16px;
+      --font-size-sm: 14px;
+    }
+
+    /* Reset básico */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Estilo do corpo */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f7f7f7;
+      color: var(--text-color);
+      line-height: 1.5;
+    }
+
+    /* Container principal */
+    .container {
+      width: 90%;
+      max-width: 1200px;
+      margin: var(--spacing-lg) auto;
+      padding: var(--spacing-lg);
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: var(--shadow-medium);
+    }
+
+    /* Cabeçalho */
+    .header {
+      background-color: var(--header-bg);
+      color: white;
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-radius: 12px 12px 0 0;
+      margin: calc(-1 * var(--spacing-lg)) calc(-1 * var(--spacing-lg)) var(--spacing-lg);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-title {
+      font-size: 26px;
+      font-weight: 500;
+    }
+
+    .back-button {
+      padding: var(--spacing-sm) var(--spacing-md);
+      background-color: #6c757d;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: var(--font-size-sm);
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    .back-button:hover {
+      background-color: #5a6268;
+      transform: translateY(-1px);
+    }
+
+    /* Título abaixo do cabeçalho */
+    .title {
+      text-align: center;
+      margin: var(--spacing-md) 0;
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--primary-color);
+    }
+
+    /* Seção de busca e botões */
+    .no-print {
+      margin: var(--spacing-md) 0;
+    }
+
+    .search-container {
+      display: flex;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .search-input {
+      flex: 1;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: var(--font-size-base);
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 4px rgba(8, 84, 160, 0.3);
+    }
+
+    .product-select {
+      flex: 2;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: var(--font-size-base);
+    }
+
+    /* Botões de ação */
+    button {
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      transition: background-color 0.2s, transform 0.1s;
+      margin: 0 var(--spacing-sm);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-success {
+      background-color: var(--success-color);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background-color: var(--success-hover);
+    }
+
+    /* Conteúdo do relatório */
+    .summary-box {
+      background-color: var(--secondary-color);
+      padding: var(--spacing-md);
+      border-radius: 6px;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .summary-box h3 {
+      margin: 0 0 var(--spacing-sm) 0;
+      color: var(--text-color);
+    }
+
+    .summary-info {
+      display: flex;
+      gap: var(--spacing-md);
+    }
+
+    .summary-item {
+      flex: 1;
+      text-align: center;
+    }
+
+    .summary-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: var(--success-color);
+    }
+
+    .summary-label {
+      color: var(--text-secondary);
+      font-size: var(--font-size-sm);
+    }
+
+    .usage-tree {
+      margin-top: var(--spacing-md);
+    }
+
+    .usage-item {
+      margin: var(--spacing-sm) 0;
+      padding: var(--spacing-md);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background-color: #f8f9fa;
+    }
+
+    .usage-details {
+      margin-left: var(--spacing-md);
+      padding: var(--spacing-sm);
+      border-left: 3px solid var(--success-color);
+    }
+
+    /* Responsividade */
+    @media (max-width: 768px) {
+      .search-container {
+        flex-direction: column;
+      }
+
+      button {
+        width: 100%;
+        margin: var(--spacing-sm) 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Container principal -->
+  <div class="container">
+    <!-- Cabeçalho com título e botão Voltar -->
+    <div class="header">
+      <div class="header-title">Substituição de Materiais</div>
+      <button class="back-button" onclick="window.location.href='index.html'">Voltar</button>
+    </div>
+
+    <!-- Título secundário -->
+    <div class="title">Relatório Onde é Usado e Substituição</div>
+
+    <!-- Seção de busca e ações (oculta na impressão) -->
+    <div class="no-print">
+      <div class="search-container">
+        <input 
+          type="text" 
+          id="searchInput" 
+          class="search-input" 
+          placeholder="Digite o código ou descrição do produto..."
+          oninput="filterProducts(this.value)"
+        >
+        <select id="productSelect" class="product-select" onchange="generateReport()">
+          <option value="">Selecione o produto...</option>
+        </select>
+        <select id="replacementSelect" class="product-select">
+          <option value="">Selecione o novo componente...</option>
+        </select>
+      </div>
+
+      <button class="btn-success" onclick="generateReport()">Gerar Relatório</button>
+      <button class="btn-success" onclick="replaceComponent()">Substituir Componente</button>
+      <button class="btn-success" onclick="window.print()">Imprimir</button>
+    </div>
+
+    <!-- Área onde o relatório será exibido -->
+    <div id="reportContent"></div>
+  </div>
+
+  <!-- JavaScript -->
+  <script type="module">
+    import { db } from './firebase-config.js';
+    import { collection, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    let produtos = [];
+    let estruturas = [];
+
+    // Inicialização
+    window.onload = async function() {
+      await loadData();
+      updateProductSelect();
+      updateReplacementSelect();
+    };
+
+    // Carregar dados do Firebase
+    async function loadData() {
+      try {
+        const [produtosSnap, estruturasSnap] = await Promise.all([
+          getDocs(collection(db, "produtos")),
+          getDocs(collection(db, "estruturas"))
+        ]);
+        produtos = produtosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        estruturas = estruturasSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      } catch (error) {
+        console.error("Erro ao carregar dados:", error);
+        alert("Erro ao carregar dados. Por favor, recarregue a página.");
+      }
+    }
+
+    // Filtrar produtos no campo de busca
+    window.filterProducts = function(searchText) {
+      const select = document.getElementById('productSelect');
+      const search = searchText.toLowerCase();
+      select.innerHTML = '<option value="">Selecione o produto...</option>';
+      produtos
+        .filter(p => (p.tipo === 'MP' || p.tipo === 'SP') && 
+                    (p.codigo.toLowerCase().includes(search) || 
+                     p.descricao.toLowerCase().includes(search)))
+        .forEach(produto => {
+          select.innerHTML += `<option value="${produto.id}">${produto.codigo} - ${produto.descricao} (${produto.tipo})</option>`;
+        });
+    };
+
+    // Atualizar opções do select de produtos
+    function updateProductSelect() {
+      const select = document.getElementById('productSelect');
+      select.innerHTML = '<option value="">Selecione o produto...</option>';
+      produtos
+        .filter(p => p.tipo === 'MP' || p.tipo === 'SP')
+        .forEach(produto => {
+          select.innerHTML += `<option value="${produto.id}">${produto.codigo} - ${produto.descricao} (${produto.tipo})</option>`;
+        });
+    }
+
+    // Atualizar opções do select de substituição
+    function updateReplacementSelect() {
+      const select = document.getElementById('replacementSelect');
+      select.innerHTML = '<option value="">Selecione o novo componente...</option>';
+      produtos
+        .filter(p => p.tipo === 'MP' || p.tipo === 'SP')
+        .forEach(produto => {
+          select.innerHTML += `<option value="${produto.id}">${produto.codigo} - ${produto.descricao} (${produto.tipo})</option>`;
+        });
+    }
+
+    // Encontrar onde o componente é usado
+    function findUsages(componentId, level = 0, path = []) {
+      const usages = [];
+      estruturas.forEach(estrutura => {
+        if (estrutura.componentes.some(comp => comp.componentId === componentId)) {
+          const produto = produtos.find(p => p.id === estrutura.produtoPaiId);
+          if (!produto || path.includes(produto.id)) return;
+          const usage = {
+            estruturaId: estrutura.id,
+            produto: produto,
+            nivel: level,
+            quantidade: estrutura.componentes.find(comp => comp.componentId === componentId).quantidade,
+            unidade: estrutura.componentes.find(comp => comp.componentId === componentId).unidade
+          };
+          usages.push(usage);
+          const parentUsages = findUsages(produto.id, level + 1, [...path, produto.id]);
+          usages.push(...parentUsages);
+        }
+      });
+      return usages;
+    }
+
+    // Gerar relatório
+    window.generateReport = async function() {
+      const produtoId = document.getElementById('productSelect').value;
+      if (!produtoId) {
+        alert('Por favor, selecione um produto.');
+        return;
+      }
+      const produto = produtos.find(p => p.id === produtoId);
+      const usages = findUsages(produtoId);
+      const usagesByLevel = usages.reduce((acc, usage) => {
+        if (!acc[usage.nivel]) acc[usage.nivel] = [];
+        acc[usage.nivel].push(usage);
+        return acc;
+      }, {});
+
+      const reportContent = document.getElementById('reportContent');
+      let html = `
+        <div class="summary-box">
+          <h3>Resumo do Produto</h3>
+          <div class="usage-info">
+            <strong>Código:</strong> ${produto.codigo}<br>
+            <strong>Descrição:</strong> ${produto.descricao}<br>
+            <strong>Tipo:</strong> ${produto.tipo}<br>
+            <strong>Unidade:</strong> ${produto.unidade}
+          </div>
+          <div class="summary-info">
+            <div class="summary-item">
+              <div class="summary-value">${usages.length}</div>
+              <div class="summary-label">Total de Utilizações</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-value">${Object.keys(usagesByLevel).length}</div>
+              <div class="summary-label">Níveis de Utilização</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      if (usages.length === 0) {
+        html += `<div class="no-results">Este produto não é utilizado em nenhuma estrutura.</div>`;
+      } else {
+        html += '<div class="usage-tree">';
+        Object.keys(usagesByLevel)
+          .sort((a, b) => parseInt(a) - parseInt(b))
+          .forEach(level => {
+            html += `<h3>Nível ${level}</h3>`;
+            usagesByLevel[level].forEach(usage => {
+              html += `
+                <div class="usage-item">
+                  <h3>${usage.produto.codigo} - ${usage.produto.descricao}</h3>
+                  <div class="usage-details">
+                    <div class="usage-info"><strong>Tipo:</strong> ${usage.produto.tipo}</div>
+                    <div class="usage-info"><strong>Quantidade Utilizada:</strong> ${usage.quantidade} ${usage.unidade}</div>
+                  </div>
+                </div>
+              `;
+            });
+          });
+        html += '</div>';
+      }
+      reportContent.innerHTML = html;
+    };
+
+    // Substituir componente
+    window.replaceComponent = async function() {
+      const oldComponentId = document.getElementById('productSelect').value;
+      const newComponentId = document.getElementById('replacementSelect').value;
+      if (!oldComponentId || !newComponentId) {
+        alert('Por favor, selecione o produto a ser substituído e o novo componente.');
+        return;
+      }
+      if (oldComponentId === newComponentId) {
+        alert('O novo componente deve ser diferente do componente atual.');
+        return;
+      }
+      const usages = findUsages(oldComponentId);
+      if (usages.length === 0) {
+        alert('Este produto não é utilizado em nenhuma estrutura.');
+        return;
+      }
+      const newComponent = produtos.find(p => p.id === newComponentId);
+      const confirmReplace = confirm(`Deseja substituir ${produtos.find(p => p.id === oldComponentId).descricao} por ${newComponent.descricao} em ${usages.length} estrutura(s)?`);
+      if (!confirmReplace) return;
+
+      try {
+        for (const usage of usages) {
+          const estruturaRef = doc(db, "estruturas", usage.estruturaId);
+          const estrutura = estruturas.find(e => e.id === usage.estruturaId);
+          const updatedComponents = estrutura.componentes.map(comp => {
+            if (comp.componentId === oldComponentId) {
+              return {
+                componentId: newComponentId,
+                quantidade: comp.quantidade,
+                unidade: newComponent.unidade
+              };
+            }
+            return comp;
+          });
+          await updateDoc(estruturaRef, { componentes: updatedComponents });
+        }
+        alert('Substituição realizada com sucesso!');
+        await loadData();
+        generateReport();
+      } catch (error) {
+        console.error("Erro ao substituir componente:", error);
+        alert("Erro ao realizar substituição. Tente novamente.");
+      }
+    };
+  </script>
+</body>
+</html>

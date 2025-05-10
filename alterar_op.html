@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alterar Ordem de Produção</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #0854a0;
+            --header-bg: #354a5f;
+            --border-color: #d4d4d4;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f7f7f7;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            background-color: var(--header-bg);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Alterar Ordem de Produção</h1>
+            <button onclick="window.location.href='ordens_producao.html'">Voltar</button>
+        </div>
+
+        <form id="editOpForm">
+            <div class="form-group">
+                <label for="opSelect">Ordem de Produção:</label>
+                <select id="opSelect" onchange="loadOpData()" required>
+                    <option value="">Selecione uma OP...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="produto">Produto:</label>
+                <select id="produto" required>
+                    <option value="">Selecione o produto...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="quantidade">Quantidade:</label>
+                <input type="number" id="quantidade" min="0.001" step="0.001" required>
+            </div>
+
+            <div class="form-group">
+                <label for="dataEntrega">Data de Entrega:</label>
+                <input type="date" id="dataEntrega" required>
+            </div>
+
+            <div class="form-group">
+                <label for="prioridade">Prioridade:</label>
+                <select id="prioridade" required>
+                    <option value="normal">Normal</option>
+                    <option value="alta">Alta</option>
+                    <option value="urgente">Urgente</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="observacoes">Observações:</label>
+                <textarea id="observacoes" rows="3" style="width: 100%"></textarea>
+            </div>
+
+            <button type="submit">Salvar Alterações</button>
+        </form>
+    </div>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { 
+            collection, 
+            getDocs,
+            getDoc, 
+            doc, 
+            updateDoc,
+            query,
+            where 
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        let produtos = [];
+        let estoques = [];
+        let parametrosSistema = {};
+
+        window.onload = async function() {
+            if (!localStorage.getItem('currentUser')) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            await loadInitialData();
+            await loadOrders();
+            setupProductSelect();
+        };
+
+        async function loadInitialData() {
+            try {
+                const [produtosSnap, estoquesSnap, parametrosSnap] = await Promise.all([
+                    getDocs(collection(db, "produtos")),
+                    getDocs(collection(db, "estoques")),
+                    getDoc(doc(db, "parametros", "sistema"))
+                ]);
+
+                produtos = produtosSnap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                estoques = estoquesSnap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                parametrosSistema = parametrosSnap.exists() ? parametrosSnap.data() : {};
+            } catch (error) {
+                console.error("Erro ao carregar dados:", error);
+                alert("Erro ao carregar dados iniciais.");
+            }
+        }
+
+        async function loadOrders() {
+            try {
+                const ordersQuery = query(
+                    collection(db, "ordensProducao"),
+                    where("status", "in", ["Pendente", "Em Produção"])
+                );
+                const ordersSnap = await getDocs(ordersQuery);
+
+                const opSelect = document.getElementById('opSelect');
+                opSelect.innerHTML = '<option value="">Selecione uma OP...</option>';
+
+                ordersSnap.docs.forEach(doc => {
+                    const op = doc.data();
+                    const produto = produtos.find(p => p.id === op.produtoId);
+                    if (produto) {
+                        opSelect.innerHTML += `
+                            <option value="${doc.id}">
+                                ${op.numero} - ${produto.codigo} - ${produto.descricao}
+                            </option>`;
+                    }
+                });
+            } catch (error) {
+                console.error("Erro ao carregar ordens:", error);
+                alert("Erro ao carregar ordens de produção.");
+            }
+        }
+
+        function setupProductSelect() {
+            const produtoSelect = document.getElementById('produto');
+            produtoSelect.innerHTML = '<option value="">Selecione o produto...</option>';
+
+            produtos
+                .filter(p => p.tipo === 'PA' || p.tipo === 'SP')
+                .forEach(produto => {
+                    produtoSelect.innerHTML += `
+                        <option value="${produto.id}">
+                            ${produto.codigo} - ${produto.descricao}
+                        </option>`;
+                });
+        }
+
+        window.loadOpData = async function() {
+            const opId = document.getElementById('opSelect').value;
+            if (!opId) return;
+
+            try {
+                const opDoc = await getDoc(doc(db, "ordensProducao", opId));
+                if (!opDoc.exists()) return;
+
+                const op = opDoc.data();
+                document.getElementById('produto').value = op.produtoId;
+                document.getElementById('quantidade').value = op.quantidade;
+                document.getElementById('dataEntrega').value = new Date(op.dataEntrega.seconds * 1000).toISOString().split('T')[0];
+                document.getElementById('prioridade').value = op.prioridade || 'normal';
+                document.getElementById('observacoes').value = op.observacoes || '';
+            } catch (error) {
+                console.error("Erro ao carregar dados da OP:", error);
+                alert("Erro ao carregar dados da ordem de produção.");
+            }
+        };
+
+        document.getElementById('editOpForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const opId = document.getElementById('opSelect').value;
+            const produtoId = document.getElementById('produto').value;
+            const quantidade = parseFloat(document.getElementById('quantidade').value);
+            const dataEntrega = document.getElementById('dataEntrega').value;
+            const prioridade = document.getElementById('prioridade').value;
+            const observacoes = document.getElementById('observacoes').value;
+
+            if (!opId || !produtoId || !quantidade || !dataEntrega) {
+                alert('Por favor, preencha todos os campos obrigatórios.');
+                return;
+            }
+
+            try {
+                const opDoc = await getDoc(doc(db, "ordensProducao", opId));
+                const opAtual = opDoc.data();
+
+                // Validar conforme configurações do sistema
+                if (!parametrosSistema.permitirEstoqueNegativo) {
+                    for (const material of opAtual.materiaisNecessarios || []) {
+                        const estoque = estoques.find(e => e.produtoId === material.produtoId);
+                        const saldoDisponivel = estoque ? estoque.saldo : 0;
+                        const necessidade = (material.quantidade / opAtual.quantidade) * quantidade;
+
+                        if (saldoDisponivel < necessidade) {
+                            throw new Error(`Estoque insuficiente para o material ${produtos.find(p => p.id === material.produtoId)?.codigo}`);
+                        }
+                    }
+                }
+
+                // Atualizar a ordem
+                await updateDoc(doc(db, "ordensProducao", opId), {
+                    produtoId,
+                    quantidade,
+                    dataEntrega: new Date(dataEntrega),
+                    prioridade,
+                    observacoes,
+                    dataAlteracao: new Date()
+                });
+
+                alert('Ordem de produção atualizada com sucesso!');
+                window.location.href = 'ordens_producao.html';
+            } catch (error) {
+                console.error("Erro ao atualizar ordem:", error);
+                alert(error.message || "Erro ao atualizar ordem de produção.");
+            }
+        });
+    </script>
+</body>
+</html>

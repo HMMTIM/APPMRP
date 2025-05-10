@@ -1,0 +1,451 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saldos Iniciais - Estoque</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #0854a0;
+            --secondary-color: #f0f3f6;
+            --border-color: #d4d4d4;
+            --text-color: #333;
+            --header-bg: #354a5f;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f7f7f7;
+            color: var(--text-color);
+        }
+
+        .container {
+            width: 95%;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background-color: var(--header-bg);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px 8px 0 0;
+            margin: -20px -20px 20px -20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 500;
+        }
+
+        .form-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .table th, .table td {
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            text-align: left;
+        }
+
+        .table th {
+            background-color: var(--secondary-color);
+            font-weight: 600;
+        }
+
+        .status-message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Saldos Iniciais - Estoque</h1>
+            <button class="btn btn-secondary" onclick="window.location.href='index.html'">Voltar</button>
+        </div>
+
+        <div class="form-section">
+            <h2>Importação de Saldos</h2>
+            <div class="form-group">
+                <label>Arquivo Excel:</label>
+                <input type="file" id="excelFile" accept=".xlsx,.xls" class="form-control">
+            </div>
+            <button class="btn btn-primary" onclick="importarSaldos()">Importar Saldos</button>
+            <div id="importStatus" class="status-message"></div>
+        </div>
+
+        <div class="form-section">
+            <h2>Cadastro Manual</h2>
+            <div class="form-group">
+                <label>Produto:</label>
+                <select id="produto" class="form-control" onchange="atualizarUnidade()"></select>
+            </div>
+            <div class="form-group">
+                <label>Quantidade:</label>
+                <input type="number" id="quantidade" class="form-control" step="0.001" min="0">
+            </div>
+            <div class="form-group">
+                <label>Armazém:</label>
+                <select id="armazem" class="form-control"></select>
+            </div>
+            <div class="form-group">
+                <label>Lote:</label>
+                <input type="text" id="lote" class="form-control">
+            </div>
+            <button class="btn btn-primary" onclick="cadastrarSaldo()">Cadastrar</button>
+        </div>
+
+        <div class="form-section">
+            <h2>Saldos Cadastrados</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Descrição</th>
+                        <th>Tipo</th>
+                        <th>Unidade</th>
+                        <th>Armazém</th>
+                        <th>Lote</th>
+                        <th>Quantidade</th>
+                        <th>Data Cadastro</th>
+                    </tr>
+                </thead>
+                <tbody id="saldosTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { 
+            collection, 
+            addDoc, 
+            getDocs,
+            query,
+            where,
+            Timestamp 
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        let produtos = [];
+        let armazens = [];
+        let estoques = [];
+
+        window.onload = async function() {
+            await carregarDados();
+            popularSelects();
+            carregarSaldos();
+        };
+
+        async function carregarDados() {
+            try {
+                const [produtosSnap, armazensSnap, estoquesSnap] = await Promise.all([
+                    getDocs(collection(db, "produtos")),
+                    getDocs(collection(db, "armazens")),
+                    getDocs(collection(db, "estoques"))
+                ]);
+
+                produtos = produtosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                armazens = armazensSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                estoques = estoquesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            } catch (error) {
+                console.error("Erro ao carregar dados:", error);
+                mostrarMensagem("Erro ao carregar dados", "error");
+            }
+        }
+
+        function popularSelects() {
+            const produtoSelect = document.getElementById('produto');
+            const armazemSelect = document.getElementById('armazem');
+
+            produtoSelect.innerHTML = '<option value="">Selecione um produto...</option>';
+            produtos.forEach(produto => {
+                produtoSelect.innerHTML += `
+                    <option value="${produto.id}">
+                        ${produto.codigo} - ${produto.descricao}
+                    </option>`;
+            });
+
+            armazemSelect.innerHTML = '<option value="">Selecione um armazém...</option>';
+            armazens.forEach(armazem => {
+                armazemSelect.innerHTML += `
+                    <option value="${armazem.id}">
+                        ${armazem.codigo} - ${armazem.descricao}
+                    </option>`;
+            });
+        }
+
+        window.atualizarUnidade = function() {
+            const produtoId = document.getElementById('produto').value;
+            const produto = produtos.find(p => p.id === produtoId);
+            if (produto) {
+                const qtdInput = document.getElementById('quantidade');
+                qtdInput.placeholder = `Quantidade em ${produto.unidade}`;
+            }
+        };
+
+        window.cadastrarSaldo = async function() {
+            const produtoId = document.getElementById('produto').value;
+            const armazemId = document.getElementById('armazem').value;
+            const quantidade = parseFloat(document.getElementById('quantidade').value);
+            const lote = document.getElementById('lote').value;
+
+            if (!produtoId || !armazemId || !quantidade || quantidade <= 0) {
+                mostrarMensagem("Preencha todos os campos corretamente", "error");
+                return;
+            }
+
+            try {
+                const produto = produtos.find(p => p.id === produtoId);
+                const estoque = estoques.find(e => e.produtoId === produtoId && e.armazemId === armazemId);
+
+                if (estoque) {
+                    mostrarMensagem("Já existe saldo para este produto neste armazém", "error");
+                    return;
+                }
+
+                const saldoInicial = {
+                    produtoId,
+                    armazemId,
+                    saldo: quantidade,
+                    lote,
+                    dataCadastro: Timestamp.now()
+                };
+
+                await addDoc(collection(db, "estoques"), saldoInicial);
+
+                await addDoc(collection(db, "movimentacoesEstoque"), {
+                    produtoId,
+                    tipo: 'ENTRADA',
+                    quantidade,
+                    tipoDocumento: 'SALDO_INICIAL',
+                    numeroDocumento: 'SI-' + new Date().getTime(),
+                    observacoes: 'Saldo inicial do produto',
+                    dataHora: Timestamp.now(),
+                    armazemId,
+                    lote
+                });
+
+                mostrarMensagem("Saldo cadastrado com sucesso!", "success");
+                await carregarDados();
+                carregarSaldos();
+                limparFormulario();
+            } catch (error) {
+                console.error("Erro ao cadastrar saldo:", error);
+                mostrarMensagem("Erro ao cadastrar saldo", "error");
+            }
+        };
+
+        window.importarSaldos = async function() {
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                mostrarMensagem("Selecione um arquivo Excel", "error");
+                return;
+            }
+
+            try {
+                const data = await lerArquivoExcel(file);
+                let sucessos = 0;
+                let erros = 0;
+
+                for (const row of data) {
+                    try {
+                        const produto = produtos.find(p => p.codigo === row.codigo);
+                        if (!produto) {
+                            erros++;
+                            continue;
+                        }
+
+                        const armazem = armazens.find(a => a.codigo === row.armazem);
+                        if (!armazem) {
+                            erros++;
+                            continue;
+                        }
+
+                        const quantidade = parseFloat(row.quantidade);
+                        if (isNaN(quantidade) || quantidade <= 0) {
+                            erros++;
+                            continue;
+                        }
+
+                        const estoque = estoques.find(e => 
+                            e.produtoId === produto.id && e.armazemId === armazem.id);
+
+                        if (!estoque) {
+                            await addDoc(collection(db, "estoques"), {
+                                produtoId: produto.id,
+                                armazemId: armazem.id,
+                                saldo: quantidade,
+                                lote: row.lote || 'INICIAL',
+                                dataCadastro: Timestamp.now()
+                            });
+
+                            await addDoc(collection(db, "movimentacoesEstoque"), {
+                                produtoId: produto.id,
+                                tipo: 'ENTRADA',
+                                quantidade,
+                                tipoDocumento: 'SALDO_INICIAL',
+                                numeroDocumento: 'SI-' + new Date().getTime(),
+                                observacoes: 'Importação de saldo inicial',
+                                dataHora: Timestamp.now(),
+                                armazemId: armazem.id,
+                                lote: row.lote || 'INICIAL'
+                            });
+
+                            sucessos++;
+                        } else {
+                            erros++;
+                        }
+                    } catch (error) {
+                        console.error("Erro ao processar linha:", error);
+                        erros++;
+                    }
+                }
+
+                mostrarMensagem(
+                    `Importação concluída: ${sucessos} sucessos, ${erros} erros`,
+                    sucessos > 0 ? "success" : "error"
+                );
+
+                await carregarDados();
+                carregarSaldos();
+                fileInput.value = '';
+            } catch (error) {
+                console.error("Erro na importação:", error);
+                mostrarMensagem("Erro ao processar arquivo", "error");
+            }
+        };
+
+        async function lerArquivoExcel(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = e.target.result;
+                        const workbook = XLSX.read(data, { type: 'binary' });
+                        const sheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[sheetName];
+                        const json = XLSX.utils.sheet_to_json(worksheet);
+                        resolve(json);
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                reader.onerror = reject;
+                reader.readAsBinaryString(file);
+            });
+        }
+
+        async function carregarSaldos() {
+            const tableBody = document.getElementById('saldosTable');
+            tableBody.innerHTML = '';
+
+            estoques.forEach(estoque => {
+                const produto = produtos.find(p => p.id === estoque.produtoId);
+                const armazem = armazens.find(a => a.id === estoque.armazemId);
+                if (!produto || !armazem) return;
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${produto.codigo}</td>
+                    <td>${produto.descricao}</td>
+                    <td>${produto.tipo}</td>
+                    <td>${produto.unidade}</td>
+                    <td>${armazem.codigo}</td>
+                    <td>${estoque.lote || '-'}</td>
+                    <td>${estoque.saldo.toFixed(3)}</td>
+                    <td>${estoque.dataCadastro ? new Date(estoque.dataCadastro.seconds * 1000).toLocaleString() : '-'}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function limparFormulario() {
+            document.getElementById('produto').value = '';
+            document.getElementById('quantidade').value = '';
+            document.getElementById('armazem').value = '';
+            document.getElementById('lote').value = '';
+        }
+
+        function mostrarMensagem(mensagem, tipo) {
+            const statusElement = document.getElementById('importStatus');
+            statusElement.textContent = mensagem;
+            statusElement.className = `status-message ${tipo}`;
+            statusElement.style.display = 'block';
+            setTimeout(() => statusElement.style.display = 'none', 5000);
+        }
+    </script>
+</body>
+</html>

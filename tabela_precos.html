@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestão de Tabela de Preços - TOTVS Style</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #0854a0;
+      --primary-hover: #0a4d8c;
+      --secondary-color: #f0f3f6;
+      --border-color: #d4d4d4;
+      --text-color: #333;
+      --success-color: #107e3e;
+      --danger-color: #bb0000;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+      font-size: 13px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .header h1 {
+      color: var(--primary-color);
+      font-size: 20px;
+      margin: 0;
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      border: none;
+      background: none;
+      border-bottom: 2px solid transparent;
+      font-weight: 500;
+      color: #555;
+    }
+
+    .tab.active {
+      border-bottom: 2px solid var(--primary-color);
+      color: var(--primary-color);
+    }
+
+    .totvs-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-top: 15px;
+      font-size: 12px;
+    }
+
+    .totvs-table th {
+      background-color: #f0f3f6;
+      color: #0854a0;
+      font-weight: 600;
+      padding: 8px 5px;
+      border: 1px solid #d4d4d4;
+      text-align: left;
+    }
+
+    .totvs-table td {
+      padding: 6px 5px;
+      border: 1px solid #d4d4d4;
+      vertical-align: middle;
+    }
+
+    .totvs-table tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    .totvs-table tr:hover {
+      background-color: #e6f2ff;
+    }
+
+    .totvs-form {
+      background-color: white;
+      border: 1px solid #d4d4d4;
+      border-radius: 4px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+
+    .totvs-form h2 {
+      color: #0854a0;
+      font-size: 16px;
+      margin-bottom: 15px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #d4d4d4;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .form-group {
+      margin-bottom: 10px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #555;
+    }
+
+    .totvs-select, .totvs-input {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid #d4d4d4;
+      border-radius: 3px;
+      font-size: 13px;
+    }
+
+    .totvs-select:focus, .totvs-input:focus {
+      outline: none;
+      border-color: #0854a0;
+      box-shadow: 0 0 0 2px rgba(8, 84, 160, 0.2);
+    }
+
+    .btn-totvs {
+      padding: 5px 10px;
+      border: 1px solid #0854a0;
+      border-radius: 3px;
+      background-color: white;
+      color: #0854a0;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-totvs:hover {
+      background-color: #0854a0;
+      color: white;
+    }
+
+    .btn-totvs i {
+      margin-right: 5px;
+    }
+
+    .btn-totvs-primary {
+      background-color: #0854a0;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    .btn-totvs-secondary {
+      background-color: white;
+      color: #0854a0;
+      border: 1px solid #0854a0;
+      padding: 8px 15px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .totvs-status {
+      font-size: 11px;
+      padding: 3px 6px;
+      border-radius: 3px;
+      font-weight: 500;
+    }
+
+    .status-active {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    .status-inactive {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+
+    .status-pending {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+
+    .notification {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      display: none;
+    }
+
+    .notification-success {
+      background-color: #d4edda;
+      color: #155724;
+      display: block;
+    }
+
+    .notification-error {
+      background-color: #f8d7da;
+      color: #721c24;
+      display: block;
+    }
+
+    .currency {
+      text-align: right;
+      font-family: 'Courier New', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-tags"></i> Gestão de Tabela de Preços</h1>
+      <div>
+        <button class="btn-totvs-secondary" onclick="window.location.href='relatorio_custo.html'">
+          <i class="fas fa-arrow-left"></i> Voltar
+        </button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('prices')">Preços</button>
+      <button class="tab" onclick="switchTab('conditions')">Condições Especiais</button>
+      <button class="tab" onclick="switchTab('history')">Histórico</button>
+      <button class="tab" onclick="switchTab('approvals')">Aprovações</button>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <!-- Aba de Preços -->
+    <div id="pricesTab" class="tab-content">
+      <div class="totvs-form">
+        <h2><i class="fas fa-edit"></i> Cadastro de Preços</h2>
+        <form id="priceForm" onsubmit="savePriceTable(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tabela de Preço:</label>
+              <select id="priceTableSelect" class="totvs-select" required onchange="loadPriceTable()">
+                <option value="">Selecione...</option>
+                <option value="1">Tabela Varejo</option>
+                <option value="2">Tabela Atacado</option>
+                <option value="3">Tabela Distribuidor</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Produto:</label>
+              <select id="productSelect" class="totvs-select" required onchange="loadProductInfo()">
+                <option value="">Selecione o produto...</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Preço Custo (R$):</label>
+              <input type="number" id="custoMedio" class="totvs-input" min="0" step="0.01" required>
+            </div>
+            <div class="form-group">
+              <label>Margem (%):</label>
+              <input type="number" id="margemLucro" class="totvs-input" min="0" step="0.01" required>
+            </div>
+            <div class="form-group">
+              <label>Preço Venda (R$):</label>
+              <input type="number" id="precoVenda" class="totvs-input" min="0" step="0.01" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Data Início:</label>
+              <input type="date" id="dataInicio" class="totvs-input" required>
+            </div>
+            <div class="form-group">
+              <label>Data Fim:</label>
+              <input type="date" id="dataFim" class="totvs-input" required>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-totvs-primary">
+              <i class="fas fa-save"></i> Salvar
+            </button>
+            <button type="button" class="btn-totvs-secondary" onclick="clearForm()">
+              <i class="fas fa-times"></i> Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <table class="totvs-table">
+        <thead>
+          <tr>
+            <th width="80px">Código</th>
+            <th width="120px">Referência</th>
+            <th width="250px">Descrição</th>
+            <th width="80px">Unidade</th>
+            <th width="100px">Preço Custo</th>
+            <th width="100px">Margem (%)</th>
+            <th width="100px">Preço Venda</th>
+            <th width="100px">Vigência</th>
+            <th width="80px">Status</th>
+            <th width="120px">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="priceTableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Aba de Condições Especiais -->
+    <div id="conditionsTab" class="tab-content" style="display: none;">
+      <div class="totvs-form">
+        <h2><i class="fas fa-percentage"></i> Condições Especiais</h2>
+        <form id="conditionForm" onsubmit="saveCondition(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Produto:</label>
+              <select id="conditionProductSelect" class="totvs-select" required>
+                <option value="">Selecione o produto...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Tipo de Condição:</label>
+              <select id="conditionType" class="totvs-select" required>
+                <option value="quantity">Quantidade</option>
+                <option value="promotion">Promoção</option>
+                <option value="special">Especial</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Quantidade Mínima:</label>
+              <input type="number" id="minQuantity" class="totvs-input" min="1">
+            </div>
+            <div class="form-group">
+              <label>Desconto (%):</label>
+              <input type="number" id="discount" class="totvs-input" min="0" max="100" step="0.01">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Início:</label>
+              <input type="date" id="conditionStart" class="totvs-input" required>
+            </div>
+            <div class="form-group">
+              <label>Fim:</label>
+              <input type="date" id="conditionEnd" class="totvs-input" required>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-totvs-primary">
+              <i class="fas fa-plus-circle"></i> Adicionar Condição
+            </button>
+            <button type="button" class="btn-totvs-secondary" onclick="clearConditionForm()">
+              <i class="fas fa-times"></i> Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <table class="totvs-table">
+        <thead>
+          <tr>
+            <th>Produto</th>
+            <th>Tipo</th>
+            <th>Quantidade Mínima</th>
+            <th>Desconto</th>
+            <th>Vigência</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="conditionsTableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Aba de Histórico -->
+    <div id="historyTab" class="tab-content" style="display: none;">
+      <table class="totvs-table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Produto</th>
+            <th>Tabela</th>
+            <th>Preço Anterior</th>
+            <th>Novo Preço</th>
+            <th>Usuário</th>
+            <th>Motivo</th>
+          </tr>
+        </thead>
+        <tbody id="historyTableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Aba de Aprovações -->
+    <div id="approvalsTab" class="tab-content" style="display: none;">
+      <table class="totvs-table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Produto</th>
+            <th>Tipo Alteração</th>
+            <th>Valor Atual</th>
+            <th>Valor Proposto</th>
+            <th>Solicitante</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="approvalsTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script type="module">
+    import { db } from './firebase-config.js';
+    import { 
+      collection, 
+      addDoc, 
+      getDocs,
+      query,
+      where,
+      Timestamp,
+      doc,
+      updateDoc,
+      deleteDoc,
+      getDoc
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    let produtos = [];
+    let precos = [];
+    let condicoes = [];
+    let historico = [];
+    let aprovacoes = [];
+    let usuarioAtual = null;
+
+    window.onload = async function() {
+      const userSession = localStorage.getItem('currentUser');
+      if (!userSession) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      usuarioAtual = JSON.parse(userSession);
+      if (usuarioAtual.nivel < 6) {
+        showNotification('Acesso restrito à gerência e diretoria.', 'error');
+        window.location.href = 'index.html';
+        return;
+      }
+
+      await loadInitialData();
+    };
+
+    async function loadInitialData() {
+      try {
+        const [produtosSnap, precosSnap, condicoesSnap, historicoSnap, aprovacoesSnap] = await Promise.all([
+          getDocs(collection(db, "produtos")),
+          getDocs(collection(db, "tabelaPrecos")),
+          getDocs(collection(db, "condicoesEspeciais")),
+          getDocs(collection(db, "historicoPrecos")),
+          getDocs(collection(db, "aprovacoesPrecos"))
+        ]);
+
+        produtos = produtosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        precos = precosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        condicoes = condicoesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        historico = historicoSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        aprovacoes = aprovacoesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        updateProductSelect();
+        updateTables();
+      } catch (error) {
+        console.error("Erro ao carregar dados:", error);
+        showNotification("Erro ao carregar dados", "error");
+      }
+    }
+
+    function updateProductSelect() {
+      const selects = ['productSelect', 'conditionProductSelect'];
+      selects.forEach(selectId => {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+
+        select.innerHTML = '<option value="">Selecione o produto...</option>';
+        produtos
+          .sort((a, b) => a.codigo.localeCompare(b.codigo))
+          .forEach(produto => {
+            select.innerHTML += `
+              <option value="${produto.id}">
+                ${produto.codigo} - ${produto.descricao}
+              </option>`;
+          });
+      });
+    }
+
+    window.loadProductInfo = function() {
+      const productId = document.getElementById('productSelect').value;
+      const priceTableId = document.getElementById('priceTableSelect').value;
+
+      const preco = precos.find(p => 
+        p.produtoId === productId && 
+        p.tabelaId === priceTableId &&
+        p.status === 'ativo'
+      );
+
+      if (preco) {
+        document.getElementById('precoVenda').value = preco.precoVenda;
+        document.getElementById('custoMedio').value = preco.custoMedio;
+        document.getElementById('margemLucro').value = preco.margemLucro;
+        document.getElementById('dataInicio').value = new Date(preco.dataInicio.seconds * 1000).toISOString().split('T')[0];
+        document.getElementById('dataFim').value = new Date(preco.dataFim.seconds * 1000).toISOString().split('T')[0];
+      } else {
+        document.getElementById('precoVenda').value = '';
+        document.getElementById('custoMedio').value = '';
+        document.getElement259
+        document.getElementById('dataInicio').value = '';
+        document.getElementById('dataFim').value = '';
+      }
+    };
+
+    window.savePriceTable = async function(event) {
+      event.preventDefault();
+
+      const produtoId = document.getElementById('productSelect').value;
+      const tabelaId = document.getElementById('priceTableSelect').value;
+      const precoVenda = parseFloat(document.getElementById('precoVenda').value);
+      const custoMedio = parseFloat(document.getElementById('custoMedio').value);
+      const margemLucro = parseFloat(document.getElementById('margemLucro').value);
+      const dataInicio = new Date(document.getElementById('dataInicio').value);
+      const dataFim = new Date(document.getElementById('dataFim').value);
+
+      if (!produtoId || !tabelaId || isNaN(precoVenda) || isNaN(custoMedio) || isNaN(margemLucro)) {
+        showNotification('Preencha todos os campos corretamente.', 'error');
+        return;
+      }
+
+      try {
+        const priceData = {
+          produtoId,
+          tabelaId,
+          precoVenda,
+          custoMedio,
+          margemLucro,
+          dataInicio: Timestamp.fromDate(dataInicio),
+          dataFim: Timestamp.fromDate(dataFim),
+          status: 'pendente',
+          atualizadoPor: usuarioAtual.id,
+          dataAtualizacao: Timestamp.now()
+        };
+
+        // Cria solicitação de aprovação
+        await addDoc(collection(db, "aprovacoesPrecos"), {
+          ...priceData,
+          tipo: 'alteracao_preco',
+          dataSolicitacao: Timestamp.now(),
+          solicitanteId: usuarioAtual.id,
+          status: 'pendente'
+        });
+
+        showNotification('Alteração de preço enviada para aprovação!', 'success');
+        document.getElementById('priceForm').reset();
+        await loadInitialData();
+      } catch (error) {
+        console.error("Erro ao salvar preços:", error);
+        showNotification("Erro ao salvar preços", "error");
+      }
+    };
+
+    window.saveCondition = async function(event) {
+      event.preventDefault();
+
+      const conditionData = {
+        produtoId: document.getElementById('conditionProductSelect').value,
+        tipo: document.getElementById('conditionType').value,
+        quantidadeMinima: parseInt(document.getElementById('minQuantity').value) || 0,
+        desconto: parseFloat(document.getElementById('discount').value) || 0,
+        dataInicio: Timestamp.fromDate(new Date(document.getElementById('conditionStart').value)),
+        dataFim: Timestamp.fromDate(new Date(document.getElementById('conditionEnd').value)),
+        status: 'pendente',
+        criadoPor: usuarioAtual.id,
+        dataCriacao: Timestamp.now()
+      };
+
+      try {
+        await addDoc(collection(db, "condicoesEspeciais"), conditionData);
+        showNotification('Condição especial criada com sucesso!', 'success');
+        document.getElementById('conditionForm').reset();
+        await loadInitialData();
+      } catch (error) {
+        console.error("Erro ao salvar condição:", error);
+        showNotification("Erro ao salvar condição", "error");
+      }
+    };
+
+    window.clearForm = function() {
+      document.getElementById('priceForm').reset();
+    };
+
+    window.clearConditionForm = function() {
+      document.getElementById('conditionForm').reset();
+    };
+
+    window.switchTab = function(tabName) {
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.style.display = 'none';
+      });
+
+      document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
+      document.getElementById(`${tabName}Tab`).style.display = 'block';
+
+      updateTables();
+    };
+
+    function updatePriceTable() {
+      const tbody = document.getElementById('priceTableBody');
+      tbody.innerHTML = '';
+
+      precos.forEach(preco => {
+        const produto = produtos.find(p => p.id === preco.produtoId);
+        if (!produto) return;
+
+        const statusClass = preco.status === 'ativo' ? 'status-active' : 
+                          preco.status === 'inativo' ? 'status-inactive' : 'status-pending';
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${produto.codigo}</td>
+          <td>${produto.referencia || '-'}</td>
+          <td>${produto.descricao}</td>
+          <td>${produto.unidade || 'UN'}</td>
+          <td class="currency">R$ ${preco.custoMedio.toFixed(2)}</td>
+          <td>${preco.margemLucro.toFixed(2)}%</td>
+          <td class="currency">R$ ${preco.precoVenda.toFixed(2)}</td>
+          <td>${formatDate(preco.dataInicio)} à ${formatDate(preco.dataFim)}</td>
+          <td><span class="totvs-status ${statusClass}">${preco.status}</span></td>
+          <td>
+            <button class="btn-totvs" onclick="editPrice('${preco.id}')">
+              <i class="fas fa-edit"></i> Editar
+            </button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function updateConditionsTable() {
+      const tbody = document.getElementById('conditionsTableBody');
+      tbody.innerHTML = '';
+
+      condicoes.forEach(condicao => {
+        const produto = produtos.find(p => p.id === condicao.produtoId);
+        if (!produto) return;
+
+        const statusClass = condicao.status === 'ativo' ? 'status-active' : 
+                          condicao.status === 'inativo' ? 'status-inactive' : 'status-pending';
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${produto.codigo} - ${produto.descricao}</td>
+          <td>${getConditionType(condicao.tipo)}</td>
+          <td>${condicao.quantidadeMinima || '-'}</td>
+          <td>${condicao.desconto ? condicao.desconto + '%' : '-'}</td>
+          <td>${formatDate(condicao.dataInicio)} à ${formatDate(condicao.dataFim)}</td>
+          <td><span class="totvs-status ${statusClass}">${condicao.status}</span></td>
+          <td>
+            <button class="btn-totvs" onclick="editCondition('${condicao.id}')">
+              <i class="fas fa-edit"></i> Editar
+            </button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function updateHistoryTable() {
+      const tbody = document.getElementById('historyTableBody');
+      tbody.innerHTML = '';
+
+      historico.forEach(registro => {
+        const produto = produtos.find(p => p.id === registro.produtoId);
+        if (!produto) return;
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${formatDate(registro.dataAtualizacao)}</td>
+          <td>${produto.codigo} - ${produto.descricao}</td>
+          <td>${getTabelaDescricao(registro.tabelaId)}</td>
+          <td class="currency">${registro.precoAnterior ? 'R$ ' + registro.precoAnterior.toFixed(2) : '-'}</td>
+          <td class="currency">R$ ${registro.precoVenda.toFixed(2)}</td>
+          <td>${registro.atualizadoPor}</td>
+          <td>${registro.motivo || '-'}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function updateApprovalsTable() {
+      const tbody = document.getElementById('approvalsTableBody');
+      tbody.innerHTML = '';
+
+      aprovacoes.forEach(aprovacao => {
+        const produto = produtos.find(p => p.id === aprovacao.produtoId);
+        if (!produto) return;
+
+        const statusClass = aprovacao.status === 'pendente' ? 'status-pending' : 
+                          aprovacao.status === 'aprovado' ? 'status-active' : 'status-inactive';
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${formatDate(aprovacao.dataSolicitacao)}</td>
+          <td>${produto.codigo} - ${produto.descricao}</td>
+          <td>${aprovacao.tipo === 'alteracao_preco' ? 'Alteração de Preço' : 'Condição Especial'}</td>
+          <td class="currency">${aprovacao.precoAnterior ? 'R$ ' + aprovacao.precoAnterior.toFixed(2) : '-'}</td>
+          <td class="currency">R$ ${aprovacao.precoVenda.toFixed(2)}</td>
+          <td>${aprovacao.solicitanteId}</td>
+          <td><span class="totvs-status ${statusClass}">${aprovacao.status}</span></td>
+          <td>
+            ${usuarioAtual.nivel >= 7 && aprovacao.status === 'pendente' ? `
+              <button class="btn-totvs" onclick="approveRequest('${aprovacao.id}')">
+                <i class="fas fa-check"></i> Aprovar
+              </button>
+              <button class="btn-totvs" onclick="rejectRequest('${aprovacao.id}')">
+                <i class="fas fa-times"></i> Rejeitar
+              </button>
+            ` : '-'}
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function updateTables() {
+      updatePriceTable();
+      updateConditionsTable();
+      updateHistoryTable();
+      updateApprovalsTable();
+    }
+
+    async function notifyUser(solicitanteId, message) {
+      try {
+        await addDoc(collection(db, "notificacoes"), {
+          usuarioId: solicitanteId,
+          mensagem: message,
+          data: Timestamp.now(),
+          lida: false
+        });
+      } catch (error) {
+        console.error("Erro ao enviar notificação:", error);
+      }
+    }
+
+    window.approveRequest = async function(approvalId) {
+      try {
+        const approvalRef = doc(db, "aprovacoesPrecos", approvalId);
+        const approvalSnap = await getDoc(approvalRef);
+        const approvalData = approvalSnap.data();
+
+        // Atualizar status da aprovação
+        await updateDoc(approvalRef, {
+          status: 'aprovado',
+          aprovadoPor: usuarioAtual.id,
+          dataAprovacao: Timestamp.now()
+        });
+
+        // Verificar se já existe preço ativo para o mesmo produto e tabela
+        const precoExistente = precos.find(p =>
+          p.produtoId === approvalData.produtoId &&
+          p.tabelaId === approvalData.tabelaId &&
+          p.status === 'ativo'
+        );
+
+        if (precoExistente) {
+          // Registrar preço anterior no histórico
+          await addDoc(collection(db, "historicoPrecos"), {
+            produtoId: precoExistente.produtoId,
+            tabelaId: precoExistente.tabelaId,
+            precoAnterior: precoExistente.precoVenda,
+            precoVenda: approvalData.precoVenda,
+            custoMedio: approvalData.custoMedio,
+            margemLucro: approvalData.margemLucro,
+            dataAtualizacao: Timestamp.now(),
+            atualizadoPor: usuarioAtual.id,
+            motivo: 'Aprovação de nova tabela de preços'
+          });
+
+          // Atualizar preço existente
+          await updateDoc(doc(db, "tabelaPrecos", precoExistente.id), {
+            precoVenda: approvalData.precoVenda,
+            custoMedio: approvalData.custoMedio,
+            margemLucro: approvalData.margemLucro,
+            dataInicio: approvalData.dataInicio,
+            dataFim: approvalData.dataFim,
+            status: 'ativo',
+            atualizadoPor: usuarioAtual.id,
+            dataAtualizacao: Timestamp.now()
+          });
+        } else {
+          // Criar novo preço
+          await addDoc(collection(db, "tabelaPrecos"), {
+            produtoId: approvalData.produtoId,
+            tabelaId: approvalData.tabelaId,
+            precoVenda: approvalData.precoVenda,
+            custoMedio: approvalData.custoMedio,
+            margemLucro: approvalData.margemLucro,
+            dataInicio: approvalData.dataInicio,
+            dataFim: approvalData.dataFim,
+            status: 'ativo',
+            atualizadoPor: usuarioAtual.id,
+            dataAtualizacao: Timestamp.now()
+          });
+        }
+
+        // Notificar solicitante
+        await notifyUser(approvalData.solicitanteId, `Sua solicitação de alteração de preço foi aprovada por ${usuarioAtual.nome}.`);
+
+        showNotification('Solicitação aprovada e tabela de preços atualizada!', 'success');
+        await loadInitialData();
+      } catch (error) {
+        console.error("Erro ao aprovar solicitação:", error);
+        showNotification("Erro ao aprovar solicitação", "error");
+      }
+    };
+
+    window.rejectRequest = async function(approvalId) {
+      try {
+        const approvalRef = doc(db, "aprovacoesPrecos", approvalId);
+        const approvalSnap = await getDoc(approvalRef);
+        const approvalData = approvalSnap.data();
+
+        await updateDoc(approvalRef, {
+          status: 'rejeitado',
+          aprovadoPor: usuarioAtual.id,
+          dataAprovacao: Timestamp.now()
+        });
+
+        // Notificar solicitante
+        await notifyUser(approvalData.solicitanteId, `Sua solicitação de alteração de preço foi rejeitada por ${usuarioAtual.nome}.`);
+
+        showNotification('Solicitação rejeitada!', 'success');
+        await loadInitialData();
+      } catch (error) {
+        console.error("Erro ao rejeitar solicitação:", error);
+        showNotification("Erro ao rejeitar solicitação", "error");
+      }
+    };
+
+    function getTabelaDescricao(tabelaId) {
+      const tabelas = {
+        '1': 'Varejo',
+        '2': 'Atacado',
+        '3': 'Distribuidor'
+      };
+      return tabelas[tabelaId] || tabelaId;
+    }
+
+    function getConditionType(tipo) {
+      const tipos = {
+        'quantity': 'Quantidade',
+        'promotion': 'Promoção',
+        'special': 'Especial'
+      };
+      return tipos[tipo] || tipo;
+    }
+
+    function formatDate(timestamp) {
+      if (!timestamp || !timestamp.seconds) return '-';
+      return new Date(timestamp.seconds * 1000).toLocaleDateString('pt-BR');
+    }
+
+    function showNotification(message, type) {
+      const notification = document.getElementById('notification');
+      notification.textContent = message;
+      notification.className = `notification notification-${type}`;
+      notification.style.display = 'block';
+      setTimeout(() => {
+        notification.style.display = 'none';
+      }, 3000);
+    }
+
+    window.editPrice = function(priceId) {
+      const preco = precos.find(p => p.id === priceId);
+      if (!preco) return;
+
+      document.getElementById('priceTableSelect').value = preco.tabelaId;
+      document.getElementById('productSelect').value = preco.produtoId;
+      document.getElementById('precoVenda').value = preco.precoVenda;
+      document.getElementById('custoMedio').value = preco.custoMedio;
+      document.getElementById('margemLucro').value = preco.margemLucro;
+      document.getElementById('dataInicio').value = new Date(preco.dataInicio.seconds * 1000).toISOString().split('T')[0];
+      document.getElementById('dataFim').value = new Date(preco.dataFim.seconds * 1000).toISOString().split('T')[0];
+
+      showNotification('Preço carregado para edição', 'success');
+    };
+
+    window.editCondition = function(conditionId) {
+      const condicao = condicoes.find(c => c.id === conditionId);
+      if (!condicao) return;
+
+      document.getElementById('conditionProductSelect').value = condicao.produtoId;
+      document.getElementById('conditionType').value = condicao.tipo;
+      document.getElementById('minQuantity').value = condicao.quantidadeMinima || '';
+      document.getElementById('discount').value = condicao.desconto || '';
+      document.getElementById('conditionStart').value = new Date(condicao.dataInicio.seconds * 1000).toISOString().split('T')[0];
+      document.getElementById('conditionEnd').value = new Date(condicao.dataFim.seconds * 1000).toISOString().split('T')[0];
+
+      showNotification('Condição carregada para edição', 'success');
+    };
+  </script>
+</body>
+</html>

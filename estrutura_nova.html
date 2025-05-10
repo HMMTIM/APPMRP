@@ -1,0 +1,2295 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NALITECK - Cadastro de Estrutura e Processo (Explorer)</title>
+  <style>
+    :root {
+  --primary-color: #0854a0;
+  --primary-hover: #0a4d8c;
+  --secondary-color: #f0f3f6;
+  --border-color: #d4d4d4;
+  --text-color: #333;
+  --text-secondary: #666;
+  --success-color: #107e3e;
+  --success-hover: #0d6e36;
+  --danger-color: #bb0000;
+  --danger-hover: #a30000;
+  --warning-color: #e9730c;
+  --header-bg: #354a5f;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f7f7f7;
+  color: var(--text-color);
+}
+
+.sap-header {
+  background-color: var(--header-bg);
+  color: white;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 100;
+}
+
+.sap-logo {
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.container {
+  display: flex;
+  width: 100%;
+  height: calc(100vh - 60px);
+  margin-top: 60px;
+}
+
+.search-panel {
+  width: 30%;
+  padding: 20px;
+  background-color: #ffffff;
+  border-right: 1px solid var(--border-color);
+  overflow-y: auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.structure-panel {
+  width: 70%;
+  padding: 20px;
+  background-color: #ffffff;
+  overflow-y: auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.sap-title {
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  color: var(--primary-color);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.search-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.search-box input,
+.search-box select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.search-box input:focus,
+.search-box select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(8, 84, 160, 0.1);
+}
+
+.search-box button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+}
+
+.btn-success {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: var(--success-hover);
+}
+
+.btn-success:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.btn-danger {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: var(--danger-hover);
+}
+
+.product-list {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.product-item {
+  padding: 12px 15px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 5px;
+  background-color: #f8f9fa;
+  cursor: move;
+}
+
+.product-item.dragging {
+  opacity: 0.5;
+}
+
+.product-item:hover {
+  background-color: #f0f3f6;
+}
+
+.folder {
+  padding: 20px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 10px;
+  background-color: #fff;
+  border-radius: 8px;
+}
+
+.folder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 400;
+}
+
+.folder-dates {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.folder-section {
+  margin-top: 10px;
+  padding-left: 20px;
+  display: none;
+}
+
+.folder-section.open {
+  display: block;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--text-secondary);
+}
+
+.operation {
+  padding: 12px 10px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 5px;
+  background-color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 4px;
+}
+
+.component {
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 5px;
+  background-color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Espaço entre elementos */
+}
+
+.component .sequence-input, .operation .sequence-input {
+  width: 50px; /* Mantendo o mesmo tamanho para ambos */
+  padding: 5px;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  text-align: center;
+}
+
+.component span {
+  flex-grow: 1; /* Faz o texto ocupar o espaço restante */
+}
+
+.component div {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.operation .operacao {
+  width: 100px;
+  height: 30px;
+  font-size: 14px;
+  flex-grow: 0.4;
+}
+
+.operation .recurso {
+  width: 100px;
+  height: 30px;
+  font-size: 14px;
+  flex-grow: 0.4;
+}
+
+.operation .tempo {
+  width: 30px;
+  height: 30px;
+  font-size: 14px;
+  flex-grow: 0.4;
+}
+
+.operation textarea {
+  width: 280px;
+  height: 30px;
+  font-size: 14px;
+}
+
+.operation-controls {
+  display: flex;
+  gap: 5px;
+}
+
+.move-btn {
+  padding: 5px 10px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.move-btn:hover {
+  background-color: #5a6268;
+}
+
+.sap-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #ffffff;
+  margin: 5% auto;
+  padding: 20px;
+  width: 90%;
+  max-width: 700px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.close-button {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 14px;
+}
+
+#historyList table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+#historyList th,
+#historyList td {
+  padding: 12px 15px;
+  border: 1px solid var(--border-color);
+  text-align: left;
+}
+
+#historyList th {
+  background-color: var(--secondary-color);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+#historyList tbody tr {
+  cursor: pointer;
+}
+
+#historyList tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+#historyList tbody tr.selected {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.component, .operation {
+  transition: background-color 0.2s;
+}
+
+/* Alternância de cores para componentes */
+.components-list .component:nth-child(odd) {
+  background-color: #ffffff; /* Branco */
+}
+
+.components-list .component:nth-child(even) {
+  background-color: #e1eeff; /* Azul mais visível */
+}
+
+/* Alternância de cores para operações */
+.operations-list .operation:nth-child(odd) {
+  background-color: #ffffff; /* Branco */
+}
+
+.operations-list .operation:nth-child(even) {
+  background-color: #e1eeff; /* Azul mais visível */
+}
+
+/* Estilo para item clicado */
+.component.clicked, .operation.clicked {
+  background-color: #e0e0e0 !important; /* Cinza claro para destacar */
+  color: #000000; /* Texto preto para melhor contraste */
+}
+
+/* Estilo para itens no modal */
+.modal-item {
+  padding: 4px;
+  border-bottom: 1px solid #d4d4d4;
+}
+
+.modal-item:nth-child(odd) {
+  background-color: #f8f9fa;
+}
+
+.modal-item:nth-child(even) {
+  background-color: #ffffff;
+}
+
+.modal-item.clicked {
+  background-color: #e6f0fa !important;
+}
+.sap-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.structure-panel .sap-buttons button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.structure-panel .sap-buttons button:hover {
+  background-color: var(--primary-hover);
+}
+
+.structure-panel .sap-buttons .btn-success,
+.structure-panel .sap-buttons .btn-danger {
+  background-color: var(--primary-color);
+}
+
+.structure-panel .sap-buttons .btn-success:hover,
+.structure-panel .sap-buttons .btn-danger:hover {
+  background-color: var(--primary-hover);
+}
+
+.structure-panel .sap-buttons .btn-success:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+.search-box button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn-primary {
+  background-color: var(--primary-color); /* #0854a0 */
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover); /* #0a4d8c */
+}
+.structure-panel .folder .btn-primary {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  background-color: var(--primary-color);
+  color: white;
+  margin-top: 5px; /* Mantém o estilo inline original */
+}
+
+.structure-panel .folder .btn-primary:hover {
+  background-color: var(--primary-hover);
+}
+
+.form-section {
+  margin-bottom: 20px;
+  padding: 15px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+.section-header {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 15px;
+  color: var(--primary-color);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.form-group {
+  margin-bottom: 10px;
+}
+
+.form-group label.required::after {
+  content: "*";
+  color: var(--danger-color);
+  margin-left: 4px;
+}
+
+.info-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.cost-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.cost-badge {
+  background-color: #f0f3f6;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.cost-badge-total {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.cost-badge-unit {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.tree-item {
+  margin-bottom: 10px;
+  border: 1px solid var(--border-color);
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.tree-item-child {
+  margin-left: 20px;
+}
+  </style>
+</head>
+<body>
+  <div class="sap-header">
+    <div class="sap-logo">NALITECK ERP</div>
+    <div>Usuário: <span id="userStatus">Não logado</span> | Empresa: 1000</div>
+  </div>
+
+  <div class="container">
+    <div class="search-panel">
+      <div class="sap-title">Pesquisar Produtos</div>
+      <div class="search-box">
+        <select id="parentProductSelect" onchange="loadStructureForProduct()">
+          <option value="">Selecione o produto pai...</option>
+        </select>
+        <input type="text" id="searchInput" placeholder="Digite para pesquisar componentes...">
+        <button class="btn-primary" onclick="searchProducts()">Pesquisar</button>
+        <button class="btn-primary" onclick="openProductModal()">Cadastrar Novo Produto</button>
+      </div>
+      <div class="product-list" id="productList"></div>
+    </div>
+
+    <div class="structure-panel">
+      <div class="sap-title">Estrutura e Processo de Produtos</div>
+      <div id="structureTree"></div>
+      <div class="sap-buttons">
+        <button class="btn-primary" onclick="openHistoryModal()">Histórico de Estruturas</button>
+        <button class="btn-success" onclick="saveStructure()" disabled>Salvar Estrutura e Processo</button>
+        <button class="btn-primary" onclick="window.location.href='index.html'">Voltar</button>
+        <button class="btn-danger" onclick="deleteCurrentStructure()">Excluir Estrutura</button>
+      </div>
+    </div>
+
+    <!-- Modal de Histórico de Estruturas -->
+    <div id="historyModal" class="modal">
+      <div class="modal-content">
+        <span class="close-button" onclick="closeHistoryModal()">×</span>
+        <div class="sap-title">Histórico de Estruturas</div>
+        <div id="historyList" style="max-height: 60vh; overflow-y: auto;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background-color: var(--primary-color); color: white;">
+                <th style="padding: 8px; text-align: left;">Código</th>
+                <th style="padding: 8px; text-align: left;">Descrição</th>
+                <th style="padding: 8px; text-align: left;">Data Criação</th>
+                <th style="padding: 8px; text-align: left;">Última Alteração</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody"></tbody>
+          </table>
+        </div>
+        <div class="sap-buttons" style="margin-top: 10px;">
+          <button class="btn-success" onclick="loadSelectedStructure()">Carregar Selecionada</button>
+          <button class="btn-danger" onclick="closeHistoryModal()">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Cadastro de Produto -->
+  <!-- Modal de Cadastro de Produto -->
+
+<div id="productModal" class="modal">
+  <div class="modal-content" style="max-width: 900px;">
+    <span class="close-button" onclick="closeProductModal()">×</span>
+    <div class="sap-title">Cadastrar Novo Produto</div>
+    <form id="productForm" onsubmit="handleProductSubmit(event)">
+      <div class="form-section">
+        <div class="section-header">Dados Básicos</div>
+        <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+          <div class="form-group" style="max-width: 125px;">
+            <label class="required">Código</label>
+            <input type="text" id="productCode" required>
+            <div class="info-text">Código único do material</div>
+          </div>
+          <div class="form-group" style="max-width: none;">
+            <label class="required">Descrição</label>
+            <input type="text" id="productDescription" required>
+          </div>
+          <div class="form-group" style="max-width: 125px;">
+            <label class="required">Tipo</label>
+            <select id="productType" required>
+              <option value="PA">PA - Produto Acabado</option>
+              <option value="SP">SP - Sub-Produto</option>
+              <option value="MP">MP - Matéria Prima</option>
+              <option value="HR">HR - Hora Máquina</option>
+              <option value="SV">SV - Serviço</option>
+            </select>
+          </div>
+          <div class="form-group" style="max-width: 125px;">
+            <label class="required">Unidade Principal</label>
+            <select id="productUnit" required>
+              <option value="PC">PC - Peça</option>
+              <option value="KG">KG - Quilograma</option>
+              <option value="MT">MT - Metro</option>
+              <option value="MM">MM - Milímetro</option>
+              <option value="MO">MO - Mão de Obra</option>
+              <option value="SV">SV - Serviço</option>
+              <option value="KT">KT - Kit</option>
+              <option value="CJ">CJ - Conjunto</option>
+              <option value="PA">PA - Par</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Unidade Secundária</label>
+            <select id="productUnitSecondary">
+              <option value="">Nenhuma</option>
+              <option value="KG">KG - Quilograma</option>
+              <option value="PC">PC - Peça</option>
+              <option value="MT">MT - Metro</option>
+              <option value="MM">MM - Milímetro</option>
+            </select>
+            <div class="info-text">Usada para conversões</div>
+          </div>
+          <div class="form-group">
+            <label>Fator de Conversão</label>
+            <input type="number" id="productConversionFactor" min="0.001" step="0.001" placeholder="Ex: 1 PC = X KG">
+            <div class="info-text">1 unidade principal = X secundárias</div>
+          </div>
+          <div class="form-group">
+            <label>Filtrar Grupo</label>
+            <input type="text" id="groupFilter" placeholder="Digite para filtrar..." oninput="filterGroups()">
+          </div>
+          <div class="form-group">
+            <label>Grupo</label>
+            <select id="productGroup"></select>
+          </div>
+          <div class="form-group">
+            <label>Filtrar Família</label>
+            <input type="text" id="familyFilter" placeholder="Digite para filtrar..." oninput="filterFamilies()">
+          </div>
+          <div class="form-group">
+            <label>Família</label>
+            <select id="productFamily"></select>
+          </div>
+          <div class="form-group">
+            <label>Lead Time (dias)</label>
+            <input type="number" id="productLeadTime" min="0" value="0">
+          </div>
+          <div class="form-group">
+            <label>Estoque Mínimo</label>
+            <input type="number" id="productMinStock" min="0" step="0.001" value="0">
+          </div>
+          <div class="form-group">
+            <label>Estoque Máximo</label>
+            <input type="number" id="productMaxStock" min="0" step="0.001" value="0">
+          </div>
+          <div class="form-group">
+            <label>Ponto de Pedido</label>
+            <input type="number" id="productOrderPoint" min="0" step="0.001" value="0">
+          </div>
+        </div>
+      </div>
+      <div class="sap-buttons">
+        <button type="submit" class="btn-success">Cadastrar</button>
+        <button type="button" class="btn-danger" onclick="closeProductModal()">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+  import { db } from './firebase-config.js';
+  import { 
+    collection, 
+    addDoc, 
+    getDocs,
+    query,
+    where,
+    doc,
+    updateDoc,
+    deleteDoc 
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  let produtos = [];
+  let produtosPaisFiltrados = [];
+  let operacoes = [];
+  let recursos = [];
+  let estruturas = [];
+  let grupos = [];
+  let familias = [];
+  let central = []; // Adicione esta linha
+  let usuarioAtual = null;
+  let initialStructureState = null;
+  let hasChanges = false;
+
+
+    window.onload = async function() {
+      usuarioAtual = JSON.parse(localStorage.getItem('currentUser'));
+      if (!usuarioAtual) {
+        window.location.href = 'login.html';
+        return;
+      }
+      document.getElementById('userStatus').textContent = usuarioAtual.nome;
+
+      await carregarDados();
+      setupDragAndDrop();
+      populateParentProductSelect();
+      searchProducts();
+    };
+
+    async function carregarDados() {
+  try {
+    const [produtosSnap, operacoesSnap, recursosSnap, estruturasSnap, gruposSnap, familiasSnap, centralSnap] = await Promise.all([
+      getDocs(collection(db, "produtos")),
+      getDocs(collection(db, "operacoes")),
+      getDocs(collection(db, "recursos")),
+      getDocs(collection(db, "estruturas")),
+      getDocs(collection(db, "grupos")),
+      getDocs(collection(db, "familias")),
+      getDocs(collection(db, "central"))
+    ]);
+
+    produtos = produtosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    produtosPaisFiltrados = produtos.filter(p => p.tipo === 'PA' || p.tipo === 'SP');
+    operacoes = operacoesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    recursos = recursosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    estruturas = estruturasSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    grupos = gruposSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    familias = familiasSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    central = centralSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    console.log("Produtos carregados:", produtos); // Verifica produtos
+    console.log("Central carregada:", central);   // Verifica central
+
+    populateProductModalSelects();
+  } catch (error) {
+    console.error("Erro ao carregar dados:", error);
+    alert("Erro ao carregar dados.");
+  }
+}
+
+    function populateParentProductSelect() {
+    const parentSelect = document.getElementById('parentProductSelect');
+    parentSelect.innerHTML = '<option value="">Selecione o produto pai...</option>';
+
+    // Ordena os produtos por código em ordem alfabética
+    const sortedProducts = [...produtosPaisFiltrados].sort((a, b) => 
+    a.codigo.localeCompare(b.codigo)
+    );
+
+   sortedProducts.forEach(produto => {
+    parentSelect.innerHTML += `<option value="${produto.id}">${produto.codigo} - ${produto.descricao} (${produto.tipo})</option>`;
+   });
+    }
+
+    function populateProductModalSelects() {
+      const groupSelect = document.getElementById('productGroup');
+      const familySelect = document.getElementById('productFamily');
+
+      groupSelect.innerHTML = '<option value="">Selecione um grupo</option>';
+      grupos.forEach(grupo => {
+        groupSelect.innerHTML += `<option value="${grupo.codigoGrupo}">${grupo.codigoGrupo} - ${grupo.nomeGrupo}</option>`;
+      });
+
+      familySelect.innerHTML = '<option value="">Selecione uma família</option>';
+      familias.forEach(familia => {
+        familySelect.innerHTML += `<option value="${familia.codigoFamilia}">${familia.codigoFamilia} - ${familia.nomeFamilia}</option>`;
+      });
+    }
+
+// Função para fechar o modal
+window.closeProductModal = function() {
+  document.getElementById('productModal').style.display = 'none';
+};
+
+// Função para abrir o modal (já fornecida, mas incluída para contexto)
+window.openProductModal = function() {
+  document.getElementById('productModal').style.display = 'block';
+  document.getElementById('productForm').reset();
+  document.getElementById('productLeadTime').value = '0';
+  document.getElementById('productMinStock').value = '0';
+  document.getElementById('productMaxStock').value = '0';
+  document.getElementById('productOrderPoint').value = '0';
+  document.getElementById('groupFilter').value = '';
+  document.getElementById('familyFilter').value = '';
+  filterGroups();
+  filterFamilies();
+};
+
+// Função para filtrar grupos
+window.filterGroups = function() {
+  const filterText = document.getElementById('groupFilter').value.toLowerCase();
+  const groupSelect = document.getElementById('productGroup');
+  groupSelect.innerHTML = '<option value="">Selecione um grupo</option>';
+  grupos
+    .filter(g => g.codigoGrupo.toLowerCase().includes(filterText) || g.nomeGrupo.toLowerCase().includes(filterText))
+    .sort((a, b) => a.codigoGrupo.localeCompare(b.codigoGrupo))
+    .forEach(grupo => {
+      groupSelect.innerHTML += `<option value="${grupo.codigoGrupo}">${grupo.codigoGrupo} - ${grupo.nomeGrupo}</option>`;
+    });
+};
+
+// Função para filtrar famílias
+window.filterFamilies = function() {
+  const filterText = document.getElementById('familyFilter').value.toLowerCase();
+  const familySelect = document.getElementById('productFamily');
+  familySelect.innerHTML = '<option value="">Selecione uma família</option>';
+  familias
+    .filter(f => f.codigoFamilia.toLowerCase().includes(filterText) || f.nomeFamilia.toLowerCase().includes(filterText))
+    .sort((a, b) => a.codigoFamilia.localeCompare(b.codigoFamilia))
+    .forEach(familia => {
+      familySelect.innerHTML += `<option value="${familia.codigoFamilia}">${familia.codigoFamilia} - ${familia.nomeFamilia}</option>`;
+    });
+};
+
+// Função para submeter o formulário
+window.handleProductSubmit = async function(event) {
+  event.preventDefault();
+  const form = document.getElementById('productForm');
+  if (!form.checkValidity()) {
+    alert('Por favor, preencha todos os campos obrigatórios.');
+    return;
+  }
+
+  const codigo = document.getElementById('productCode').value.trim();
+  const descricao = document.getElementById('productDescription').value.trim();
+  const tipo = document.getElementById('productType').value;
+  const unidade = document.getElementById('productUnit').value;
+  const unidadeSecundaria = document.getElementById('productUnitSecondary').value || null;
+  const fatorConversao = parseFloat(document.getElementById('productConversionFactor').value) || null;
+  const grupo = document.getElementById('productGroup').value || null;
+  const familia = document.getElementById('productFamily').value || null;
+  const leadTime = parseInt(document.getElementById('productLeadTime').value) || 0;
+  const estoqueMinimo = parseFloat(document.getElementById('productMinStock').value) || 0;
+  const estoqueMaximo = parseFloat(document.getElementById('productMaxStock').value) || 0;
+  const pontoPedido = parseFloat(document.getElementById('productOrderPoint').value) || 0;
+
+  if (!codigo || !descricao) {
+    alert('Por favor, preencha os campos obrigatórios (Código e Descrição).');
+    return;
+  }
+
+  if (unidadeSecundaria && !fatorConversao) {
+    alert('Informe o fator de conversão quando selecionar uma unidade secundária.');
+    return;
+    }
+
+  try {
+    const newProduct = {
+      codigo,
+      descricao,
+      tipo,
+      unidade,
+      unidadeSecundaria,
+      fatorConversao,
+      grupo,
+      familia,
+      leadTime,
+      estoqueMinimo,
+      estoqueMaximo,
+      pontoPedido,
+      dataCadastro: new Date().toISOString()
+    };
+    const docRef = await addDoc(collection(db, "produtos"), newProduct);
+    newProduct.id = docRef.id;
+    produtos.push(newProduct);
+    if (tipo === 'PA' || tipo === 'SP') {
+      produtosPaisFiltrados.push(newProduct);
+      populateParentProductSelect();
+    }
+    searchProducts();
+    alert("Produto cadastrado com sucesso!");
+    closeProductModal();
+  } catch (error) {
+    console.error("Erro ao cadastrar produto:", error);
+    alert("Erro ao cadastrar produto: " + error.message);
+  }
+};
+
+    window.loadStructureForProduct = function() {
+      const productId = document.getElementById('parentProductSelect').value;
+      const structureTree = document.getElementById('structureTree');
+      const saveButton = document.querySelector('.btn-success');
+
+      structureTree.innerHTML = '';
+      saveButton.disabled = true; // Desativa o botão por padrão
+      initialStructureState = null; // Reseta o estado inicial
+      hasChanges = false; // Reseta o flag de alterações
+
+      if (!productId) return;
+
+      const produtoPai = produtos.find(p => p.id === productId);
+      const existingStructure = estruturas.find(e => e.produtoPaiId === productId);
+
+      if (produtoPai) {
+        const folder = createFolder(produtoPai, existingStructure);
+        if (existingStructure) {
+          populateFolderWithStructure(folder, existingStructure);
+          initialStructureState = JSON.parse(JSON.stringify({
+            componentes: existingStructure.componentes || [],
+            operacoes: existingStructure.operacoes || []
+          }));
+        } else {
+          saveButton.disabled = false; // Estrutura nova, ativa o botão
+        }
+        structureTree.appendChild(folder);
+        setupDragAndDrop();
+        setupChangeListeners(folder);
+      }
+    };
+
+    function setupChangeListeners(folder) {
+      const saveButton = document.querySelector('.btn-success');
+
+      function markAsChanged() {
+        hasChanges = true;
+        saveButton.disabled = false;
+      }
+
+      folder.querySelectorAll('.quantidade').forEach(input => {
+        input.addEventListener('input', markAsChanged);
+      });
+
+      folder.querySelectorAll('.operation input, .operation select, .operation textarea').forEach(element => {
+        element.addEventListener('input', markAsChanged);
+      });
+
+      const observer = new MutationObserver(() => {
+        markAsChanged();
+        folder.querySelectorAll('.quantidade').forEach(input => {
+          input.removeEventListener('input', markAsChanged);
+          input.addEventListener('input', markAsChanged);
+        });
+        folder.querySelectorAll('.operation input, .operation select, .operation textarea').forEach(element => {
+          element.removeEventListener('input', markAsChanged);
+          element.addEventListener('input', markAsChanged);
+        });
+      });
+      observer.observe(folder.querySelector('.folder-content'), { childList: true, subtree: true });
+    }
+
+    function populateFolderWithStructure(folder, estrutura) {
+  const componentsList = folder.querySelector('.components-list');
+  const operationsList = folder.querySelector('.operations-list');
+
+  if (estrutura.componentes) {
+    estrutura.componentes.forEach((comp, index) => {
+      const produto = produtos.find(p => p.id === comp.componentId);
+      if (produto) {
+        const documento = central.find(doc => doc.produtoId === produto.id);
+        const pdfLink = documento ? documento.linkPdf : '';
+        console.log(`Produto: ${produto.codigo}, ID: ${produto.id}, pdfLink: ${pdfLink}`); // Depuração
+
+        const component = document.createElement('div');
+        component.className = 'component';
+        component.dataset.id = produto.id;
+        component.innerHTML = `
+          <input type="number" class="sequence-input" placeholder="Seq." min="1" step="1" value="${index + 1}" readonly>
+          <span>
+            <span style="color: var(--primary-color);">${produto.codigo}</span> - ${produto.descricao} (${produto.tipo})
+            <button class="btn-primary" style="margin-left: 5px; padding: 4px 8px; font-size: 12px;" onclick="openDrawingModal('${produto.codigo}', '${pdfLink}')">Ver Desenho</button>
+            ${produto.tipo === 'SP' ? `<span style="cursor: pointer; margin-left: 5px;" onclick="showStructureModal('${produto.id}')">+</span>` : ''}
+          </span>
+          <div>
+            <input type="number" class="quantidade" placeholder="Quant." min="0.001" step="0.001" value="${comp.quantidade}">
+            <span>${produto.unidade}</span>
+            <button class="btn-danger" onclick="removeComponent(this)">X</button>
+          </div>
+        `;
+        componentsList.appendChild(component);
+        folder.querySelector('.structure-section').classList.add('open');
+      }
+    });
+  }
+
+  if (estrutura.operacoes) {
+    const sortedOperacoes = [...operacoes].sort((a, b) => a.numero.localeCompare(b.numero));
+    const sortedRecursos = [...recursos].sort((a, b) => a.codigo.localeCompare(b.codigo));
+
+    estrutura.operacoes.forEach(op => {
+      const operation = document.createElement('div');
+      operation.className = 'operation';
+      operation.innerHTML = `
+        <input type="number" class="sequence-input" placeholder="Seq." min="1" step="1" value="${op.sequencia}">
+        <select class="operacao" required>
+          <option value="">Selecione a operação...</option>
+          ${sortedOperacoes.map(o => `<option value="${o.id}" ${o.id === op.operacaoId ? 'selected' : ''}>${o.numero} - ${o.operacao}</option>`).join('')}
+        </select>
+        <select class="recurso" required>
+          <option value="">Selecione o recurso...</option>
+          ${sortedRecursos.map(r => `<option value="${r.id}" ${r.id === op.recursoId ? 'selected' : ''}>${r.codigo} - ${r.maquina} (${r.setor})</option>`).join('')}
+        </select>
+        <input type="number" class="tempo" placeholder="Tempo (min)" min="0.1" step="0.1" value="${op.tempo}">
+        <textarea class="descricao" placeholder="Descrição" maxlength="50" rows="1">${op.descricao || ''}</textarea>
+        <div class="operation-controls">
+          <button type="button" class="move-btn" onclick="moveOperation(this, -1)">↑</button>
+          <button type="button" class="move-btn" onclick="moveOperation(this, 1)">↓</button>
+          <button class="btn-danger" onclick="removeOperation(this)">X</button>
+        </div>
+      `;
+      operationsList.appendChild(operation);
+      folder.querySelector('.process-section').classList.add('open');
+    });
+  }
+}
+
+   window.searchProducts = function() {
+   const searchTerm = document.getElementById('searchInput').value.toUpperCase();
+   const productList = document.getElementById('productList');
+   productList.innerHTML = '';
+
+   const filteredProducts = produtos.filter(p => 
+    (p.codigo.toUpperCase().includes(searchTerm) || p.descricao.toUpperCase().includes(searchTerm)) &&
+    !['PA'].includes(p.tipo)
+   ).slice(0, 20);
+
+   filteredProducts.forEach(produto => {
+    const item = document.createElement('div');
+    item.className = 'product-item';
+    item.draggable = true;
+    item.dataset.id = produto.id;
+    item.innerHTML = `${produto.codigo} - ${produto.descricao} (${produto.tipo})`;
+    productList.appendChild(item);
+   });
+   };
+
+   function setupDragAndDrop() {
+   // Remove listeners antigos
+   document.removeEventListener('dragstart', handleDragStart);
+   document.removeEventListener('dragend', handleDragEnd);
+   document.removeEventListener('dragover', handleDragOver);
+   document.removeEventListener('drop', handleDrop);
+
+   function handleDragStart(e) {
+    if (e.target.classList.contains('product-item')) {
+      e.target.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', e.target.dataset.id);
+    }
+   }
+
+   function handleDragEnd(e) {
+    if (e.target.classList.contains('product-item')) {
+      e.target.classList.remove('dragging');
+    }
+   }
+
+   function handleDragOver(e) {
+    if (e.target.closest('.folder')) {
+      e.preventDefault(); // Só permite drop se estiver sobre um folder
+    }
+   }
+
+   function handleDrop(e) {
+    if (e.target.closest('.folder')) {
+      e.preventDefault();
+      e.stopPropagation();
+      const folder = e.target.closest('.folder');
+      const productId = e.dataTransfer.getData('text/plain');
+      const produto = produtos.find(p => p.id === productId);
+      if (produto) {
+        addComponentToFolder(folder, produto);
+      }
+    }
+   }
+
+   // Adiciona listeners ao document
+   document.addEventListener('dragstart', handleDragStart);
+   document.addEventListener('dragend', handleDragEnd);
+   document.addEventListener('dragover', handleDragOver);
+   document.addEventListener('drop', handleDrop);
+   }
+// Adicionar evento de clique para componentes e operações
+
+  document.addEventListener('click', function(e) {
+  const component = e.target.closest('.component');
+  const operation = e.target.closest('.operation');
+  const modalItem = e.target.closest('.modal-item');
+
+  // Remove classe 'clicked' de todos os itens
+  document.querySelectorAll('.component.clicked, .operation.clicked, .modal-item.clicked').forEach(item => {
+    item.classList.remove('clicked');
+  });
+
+  // Adiciona classe 'clicked' ao item clicado
+  if (component) {
+    component.classList.add('clicked');
+  } else if (operation) {
+    operation.classList.add('clicked');
+  } else if (modalItem) {
+    modalItem.classList.add('clicked');
+  }
+});
+   function createFolder(produto, estrutura = null) {
+   const folder = document.createElement('div');
+   folder.className = 'folder';
+   folder.dataset.id = produto.id;
+
+        // Calcular custos
+        const custos = calcularCustos(estrutura);
+        const creationDate = estrutura?.dataCriacao ? new Date(estrutura.dataCriacao).toLocaleString('pt-BR') : 'Não criada';
+        const lastUpdateDate = estrutura?.dataUltimaAlteracao ? new Date(estrutura.dataUltimaAlteracao).toLocaleString('pt-BR') : 'Não alterada';
+
+        folder.innerHTML = `
+          <div class="cost-summary" style="margin-bottom: 10px; padding: 10px; background-color: #f8f9fa; border-radius: 4px;">
+            <div><strong>Custo Material:</strong> R$ ${custos.material.toFixed(2)}</div>
+            <div><strong>Custo Mão de Obra:</strong> R$ ${custos.maoDeObra.toFixed(2)}</div>
+            <div><strong>Custo Total:</strong> R$ ${custos.total.toFixed(2)}</div>
+          </div>
+    <div class="folder-header" onclick="toggleFolder(this)">
+      <span>${produto.codigo} - ${produto.descricao} (${produto.tipo})</span>
+      <button class="btn-danger" onclick="removeFolder(this, event)">X</button>
+    </div>
+    <div class="folder-dates">
+      Criado em: ${creationDate} | Última alteração: ${lastUpdateDate}
+    </div>
+    <div class="folder-content">
+      <div class="folder-section structure-section">
+        <div class="section-title">Estrutura (Componentes)</div>
+        <div class="components-list"></div>
+      </div>
+      <div class="folder-section process-section">
+        <div class="section-title">Processo (Operações)</div>
+        <div class="operations-list"></div>
+      </div>
+      <button class="btn-primary" onclick="addOperationToFolder(this)" style="margin-top: 5px;">Adicionar Operação</button>
+    </div>
+   `;
+   folder.querySelector('.folder-content').classList.add('open');
+   console.log('Folder criado, components-list vazio?', folder.querySelector('.components-list').children.length === 0);
+   return folder;
+   }
+
+
+    window.toggleFolder = function(header) {
+      const content = header.nextElementSibling;
+      content.classList.toggle('open');
+    };
+
+    function addComponentToFolder(folder, produto) {
+  const componentsList = folder.querySelector('.components-list');
+  const existingComponent = componentsList.querySelector(`.component[data-id="${produto.id}"]`);
+
+  if (existingComponent) {
+    return; // Ignora duplicatas
+  }
+
+  const components = Array.from(componentsList.querySelectorAll('.component'));
+  if (components.some(comp => comp.dataset.id === produto.id)) {
+    return;
+  }
+
+  if (produto.tipo === 'SP') {
+    const hasStructure = estruturas.some(e => e.produtoPaiId === produto.id);
+    if (!hasStructure) {
+      alert(`Atenção: O Semi-Produto "${produto.codigo} - ${produto.descricao}" foi adicionado, mas não possui uma estrutura definida. Considere criar uma estrutura para este produto.`);
+    }
+  }
+
+  const component = document.createElement('div');
+  component.className = 'component';
+  component.dataset.id = produto.id;
+  const sequence = componentsList.querySelectorAll('.component').length + 1;
+
+  component.innerHTML = `
+    <input type="number" class="sequence-input" placeholder="Seq." min="1" step="1" value="${sequence}" readonly>
+    <span>
+      ${produto.codigo} - ${produto.descricao} (${produto.tipo})
+      ${produto.tipo === 'SP' ? `<span style="cursor: pointer; margin-left: 5px;" onclick="showStructureModal('${produto.id}')">+</span>` : ''}
+    </span>
+    <div>
+      <input type="number" class="quantidade" placeholder="Quant." min="0.001" step="0.001" value="1">
+      <span>${produto.unidade}</span>
+      <button class="btn-danger" onclick="removeComponent(this)">X</button>
+    </div>
+  `;
+  componentsList.appendChild(component);
+  folder.querySelector('.structure-section').classList.add('open');
+  hasChanges = true;
+  document.querySelector('.btn-success').disabled = false;
+}
+
+   window.addOperationToFolder = function(button) {
+  const folder = button.closest('.folder');
+  const operationsList = folder.querySelector('.operations-list');
+  const operation = document.createElement('div');
+  operation.className = 'operation';
+
+  // Ordena operações por numero em ordem crescente
+  const sortedOperacoes = [...operacoes].sort((a, b) => a.numero.localeCompare(b.numero));
+  // Ordena recursos por codigo em ordem crescente
+  const sortedRecursos = [...recursos].sort((a, b) => a.codigo.localeCompare(b.codigo));
+
+  operation.innerHTML = `
+    <input type="number" class="sequence-input" placeholder="Seq." min="1" step="1" value="${operationsList.querySelectorAll('.operation').length + 1}">
+    <select class="operacao" required>
+      <option value="">Selecione a operação...</option>
+      ${sortedOperacoes.map(op => `<option value="${op.id}">${op.numero} - ${op.operacao}</option>`).join('')}
+    </select>
+    <select class="recurso" required>
+      <option value="">Selecione o recurso...</option>
+      ${sortedRecursos.map(rec => `<option value="${rec.id}">${rec.codigo} - ${rec.maquina} (${rec.setor})</option>`).join('')}
+    </select>
+    <input type="number" class="tempo" placeholder="Tempo (min)" min="0.1" step="0.1" value="1">
+    <textarea class="descricao" placeholder="Descrição" maxlength="50" rows="1"></textarea>
+    <div class="operation-controls">
+      <button type="button" class="move-btn" onclick="moveOperation(this, -1)">↑</button>
+      <button type="button" class="move-btn" onclick="moveOperation(this, 1)">↓</button>
+      <button class="btn-danger" onclick="removeOperation(this)">X</button>
+    </div>
+  `;
+  operationsList.appendChild(operation);
+  folder.querySelector('.process-section').classList.add('open');
+  hasChanges = true;
+  document.querySelector('.btn-success').disabled = false;
+};
+    window.moveOperation = function(button, direction) {
+      const operation = button.closest('.operation');
+      const operationsList = operation.parentElement;
+      const operations = Array.from(operationsList.querySelectorAll('.operation'));
+      const index = operations.indexOf(operation);
+      const newIndex = index + direction;
+
+      if (newIndex >= 0 && newIndex < operations.length) {
+        if (direction === 1) {
+          operationsList.insertBefore(operations[newIndex], operation);
+        } else {
+          operationsList.insertBefore(operation, operations[newIndex]);
+        }
+        updateOperationSequences(operationsList);
+        hasChanges = true;
+        document.querySelector('.btn-success').disabled = false;
+      }
+    };
+
+    window.removeFolder = function(button, event) {
+      event.stopPropagation();
+      if (confirm("Tem certeza que deseja remover esta pasta e seus componentes/operações?")) {
+        button.closest('.folder').remove();
+        hasChanges = true;
+        document.querySelector('.btn-success').disabled = false;
+      }
+    };
+
+    window.removeComponent = function(button) {
+      const componentsList = button.closest('.components-list');
+      button.closest('.component').remove();
+      updateComponentSequences(componentsList);
+      hasChanges = true;
+      document.querySelector('.btn-success').disabled = false;
+    };
+
+   function updateComponentSequences(componentsList) {
+   const components = componentsList.querySelectorAll('.component');
+   components.forEach((comp, index) => {
+    comp.querySelector('.sequence-input').value = index + 1;
+   });
+}
+    window.removeOperation = function(button) {
+      const operationsList = button.closest('.operations-list');
+      button.closest('.operation').remove();
+      updateOperationSequences(operationsList);
+      hasChanges = true;
+      document.querySelector('.btn-success').disabled = false;
+    };
+
+    function updateOperationSequences(operationsList) {
+      const operations = operationsList.querySelectorAll('.operation');
+      operations.forEach((op, index) => {
+        op.querySelector('.sequence-input').value = index + 1;
+      });
+    }
+
+    window.saveStructure = async function() {
+    const structureTree = document.getElementById('structureTree');
+    const folders = structureTree.querySelectorAll('.folder');
+
+    if (folders.length === 0) {
+    alert("Selecione um produto pai para criar ou editar a estrutura!");
+    return;
+   }
+
+   const structureData = [];
+   const processedIds = new Set();
+   let hasDuplicates = false;
+   let duplicateMessage = "Os seguintes componentes estão duplicados:\n";
+
+   function processFolder(folder) {
+    const productId = folder.dataset.id;
+    if (processedIds.has(productId)) {
+      alert(`Ciclo detectado no produto ${productId}. A estrutura não pode conter ciclos.`);
+      throw new Error("Ciclo detectado");
+    }
+    processedIds.add(productId);
+
+    const components = [];
+    const componentIds = new Set();
+    folder.querySelectorAll('.component').forEach(comp => {
+      const componentId = comp.dataset.id;
+      const quantidade = parseFloat(comp.querySelector('.quantidade').value) || 1;
+      if (quantidade > 0) {
+        if (componentIds.has(componentId)) {
+          hasDuplicates = true;
+          const produto = produtos.find(p => p.id === componentId);
+          duplicateMessage += `- ${produto.codigo} - ${produto.descricao} (${produto.tipo})\n`;
+        } else {
+          componentIds.add(componentId);
+          components.push({
+            componentId: componentId,
+            quantidade,
+            unidade: produtos.find(p => p.id === componentId).unidade
+          });
+        }
+      }
+    });
+
+    const operations = [];
+    folder.querySelectorAll('.operation').forEach(op => {
+      const sequencia = parseInt(op.querySelector('.sequence-input').value) || 1;
+      const operacaoId = op.querySelector('.operacao').value;
+      const recursoId = op.querySelector('.recurso').value;
+      const tempo = parseFloat(op.querySelector('.tempo').value) || 1;
+      const descricao = op.querySelector('.descricao').value;
+      if (operacaoId && recursoId && tempo > 0) {
+        operations.push({
+          sequencia,
+          operacaoId,
+          recursoId,
+          tempo,
+          descricao: descricao || ''
+        });
+      }
+    });
+
+    const existingStructure = estruturas.find(e => e.produtoPaiId === productId);
+    const now = new Date().toISOString();
+    structureData.push({
+      produtoPaiId: productId,
+      componentes: components,
+      operacoes: operations,
+      dataCriacao: existingStructure?.dataCriacao || now,
+      dataUltimaAlteracao: now
+    });
+  }
+
+  try {
+    folders.forEach(folder => {
+      processFolder(folder);
+    });
+
+    if (hasDuplicates) {
+      duplicateMessage += "\nPor favor, remova os itens duplicados antes de salvar.";
+      alert(duplicateMessage);
+      return;
+    }
+
+    for (const item of structureData) {
+      const q = query(collection(db, "estruturas"), where("produtoPaiId", "==", item.produtoPaiId));
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        const docId = querySnapshot.docs[0].id;
+        const existingData = querySnapshot.docs[0].data();
+        if (!existingData.dataCriacao) {
+          item.dataCriacao = item.dataCriacao || new Date().toISOString();
+        }
+        await updateDoc(doc(db, "estruturas", docId), item);
+        console.log(`Estrutura do produto ${item.produtoPaiId} atualizada com sucesso.`);
+        const index = estruturas.findIndex(e => e.id === docId);
+        if (index !== -1) estruturas[index] = { id: docId, ...item };
+      } else {
+        const docRef = await addDoc(collection(db, "estruturas"), item);
+        console.log(`Nova estrutura para o produto ${item.produtoPaiId} criada com sucesso.`);
+        item.id = docRef.id;
+        estruturas.push(item);
+      }
+    }
+
+    // Atualiza os dados e limpa a estrutura
+    await carregarDados();
+
+    // Limpa o structureTree
+    structureTree.innerHTML = '';
+    document.getElementById('parentProductSelect').value = ''; // Opcional: limpa o select também
+    hasChanges = false;
+    document.querySelector('.btn-success').disabled = true;
+
+    alert("Estrutura e Processo salvos com sucesso! A área de estrutura foi limpa.");
+  } catch (error) {
+    console.error("Erro ao salvar estrutura e processo:", error);
+    if (error.message !== "Ciclo detectado") {
+      alert("Erro ao salvar estrutura e processo: " + error.message);
+    }
+  }
+};
+
+// Variável para rastrear a estrutura selecionada no histórico
+let selectedStructureId = null;
+window.openHistoryModal = function() {
+  const historyModal = document.getElementById('historyModal');
+  const historyTableBody = document.getElementById('historyTableBody');
+  historyTableBody.innerHTML = ''; // Limpa o conteúdo anterior
+  selectedStructureId = null; // Reseta a seleção
+
+  if (estruturas.length === 0) {
+    historyTableBody.innerHTML = '<tr><td colspan="4" style="padding: 8px; text-align: center;">Nenhuma estrutura encontrada.</td></tr>';
+  } else {
+    // Ordena as estruturas por data de última alteração (mais recente primeiro)
+    const sortedEstruturas = [...estruturas].sort((a, b) => {
+      const dateA = a.dataUltimaAlteracao ? new Date(a.dataUltimaAlteracao) : new Date(0);
+      const dateB = b.dataUltimaAlteracao ? new Date(b.dataUltimaAlteracao) : new Date(0);
+      return dateB - dateA;
+    });
+
+    sortedEstruturas.forEach((estrutura, index) => {
+      const produtoPai = produtos.find(p => p.id === estrutura.produtoPaiId);
+      if (!produtoPai) return; // Pula se o produto pai não for encontrado
+
+      // Trata datas ausentes ou inválidas
+      const dataCriacao = estrutura.dataCriacao 
+        ? new Date(estrutura.dataCriacao).toLocaleString('pt-BR', { 
+            day: '2-digit', 
+            month: '2-digit', 
+            year: 'numeric', 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          }) 
+        : 'Não disponível';
+      const dataUltimaAlteracao = estrutura.dataUltimaAlteracao 
+        ? new Date(estrutura.dataUltimaAlteracao).toLocaleString('pt-BR', { 
+            day: '2-digit', 
+            month: '2-digit', 
+            year: 'numeric', 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          }) 
+        : 'Não alterada';
+
+      const row = document.createElement('tr');
+      row.dataset.structureId = estrutura.id;
+      row.innerHTML = `
+        <td style="padding: 8px;">${produtoPai.codigo || 'N/A'}</td>
+        <td style="padding: 8px;">${produtoPai.descricao || 'Sem descrição'}</td>
+        <td style="padding: 8px;">${dataCriacao}</td>
+        <td style="padding: 8px;">${dataUltimaAlteracao}</td>
+      `;
+
+      // Adiciona evento de clique para seleção
+      row.addEventListener('click', () => {
+        const previouslySelected = historyTableBody.querySelector('.selected');
+        if (previouslySelected) previouslySelected.classList.remove('selected');
+        row.classList.add('selected');
+        selectedStructureId = estrutura.id;
+      });
+
+      // Adiciona evento de duplo clique para carregar diretamente
+      row.addEventListener('dblclick', () => {
+        selectedStructureId = estrutura.id;
+        loadSelectedStructure();
+      });
+
+      historyTableBody.appendChild(row);
+    });
+  }
+
+  historyModal.style.display = 'block';
+};
+
+window.closeHistoryModal = function() {
+  document.getElementById('historyModal').style.display = 'none';
+  selectedStructureId = null;
+};
+
+window.loadSelectedStructure = function() {
+  if (!selectedStructureId) {
+    alert("Por favor, selecione uma estrutura no histórico clicando em uma linha.");
+    return;
+  }
+
+  const estrutura = estruturas.find(e => e.id === selectedStructureId);
+  if (!estrutura) {
+    alert("Estrutura selecionada não encontrada.");
+    return;
+  }
+
+  const produtoPai = produtos.find(p => p.id === estrutura.produtoPaiId);
+  if (!produtoPai) {
+    alert("Produto pai associado à estrutura não encontrado.");
+    return;
+  }
+
+  try {
+    // Define o produto pai no select
+    const parentSelect = document.getElementById('parentProductSelect');
+    parentSelect.value = produtoPai.id;
+
+    // Carrega a estrutura na tela
+    const structureTree = document.getElementById('structureTree');
+    structureTree.innerHTML = '';
+    const folder = createFolder(produtoPai, estrutura);
+    populateFolderWithStructure(folder, estrutura);
+    structureTree.appendChild(folder);
+
+    // Reconfigura drag and drop e listeners
+    setupDragAndDrop();
+    setupChangeListeners(folder);
+
+    // Reseta estado de alterações
+    hasChanges = false;
+    initialStructureState = JSON.parse(JSON.stringify({
+      componentes: estrutura.componentes || [],
+      operacoes: estrutura.operacoes || []
+    }));
+    document.querySelector('.btn-success').disabled = true;
+
+    closeHistoryModal();
+  } catch (error) {
+    console.error("Erro ao carregar estrutura:", error);
+    alert("Erro ao carregar a estrutura selecionada: " + error.message);
+  }
+};
+window.deleteCurrentStructure = async function() {
+  const structureTree = document.getElementById('structureTree');
+  const folder = structureTree.querySelector('.folder');
+
+  if (!folder) {
+    alert("Nenhuma estrutura está carregada. Selecione um produto pai para excluir sua estrutura.");
+    return;
+  }
+
+  const productId = folder.dataset.id;
+  const produtoPai = produtos.find(p => p.id === productId);
+  if (!produtoPai) {
+    alert("Produto pai não encontrado.");
+    return;
+  }
+
+  const estrutura = estruturas.find(e => e.produtoPaiId === productId);
+  if (!estrutura) {
+    alert(`Nenhuma estrutura registrada encontrada para o produto "${produtoPai.codigo} - ${produtoPai.descricao}".`);
+    return;
+  }
+
+  try {
+    // Verificação 1: Estrutura tem componentes?
+    if (estrutura.componentes && estrutura.componentes.length > 0) {
+      alert(`A estrutura do produto "${produtoPai.codigo} - ${produtoPai.descricao}" não pode ser excluída pois possui componentes associados. Remova os componentes antes de excluir.`);
+      return;
+    }
+
+    // Verificação 2: Estrutura é usada como componente em outra estrutura?
+    const isComponentInOtherStructure = estruturas.some(otherStructure => 
+      otherStructure.componentes && 
+      otherStructure.componentes.some(comp => comp.componentId === productId) &&
+      otherStructure.id !== estrutura.id
+    );
+    if (isComponentInOtherStructure) {
+      alert(`A estrutura do produto "${produtoPai.codigo} - ${produtoPai.descricao}" não pode ser excluída pois é usada como componente em outra estrutura.`);
+      return;
+    }
+
+    // Verificação 3: Existem ordens de produção abertas para este produto?
+    const ordensSnapshot = await getDocs(query(
+      collection(db, "ordensProducao"), 
+      where("produtoId", "==", productId), 
+      where("status", "==", "aberta")
+    ));
+    if (!ordensSnapshot.empty) {
+      alert(`A estrutura do produto "${produtoPai.codigo} - ${produtoPai.descricao}" não pode ser excluída pois existem ordens de produção abertas associadas.`);
+      return;
+    }
+
+    // Confirmação do usuário
+    if (!confirm(`Tem certeza que deseja excluir a estrutura do produto "${produtoPai.codigo} - ${produtoPai.descricao}"? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
+
+    // Exclui a estrutura do Firestore
+    await deleteDoc(doc(db, "estruturas", estrutura.id));
+
+    // Remove da lista local
+    estruturas = estruturas.filter(e => e.id !== estrutura.id);
+
+    // Limpa a interface
+    structureTree.innerHTML = '';
+    document.getElementById('parentProductSelect').value = '';
+    document.querySelector('.btn-success').disabled = true;
+    hasChanges = false;
+
+    // Atualiza os dados
+    await carregarDados();
+
+    alert("Estrutura excluída com sucesso!");
+  } catch (error) {
+    console.error("Erro ao excluir estrutura:", error);
+    alert("Erro ao excluir a estrutura: " + error.message);
+  }
+};
+
+// Variável global para rastrear o produto atual no modal
+let currentModalProductId = null;
+
+window.showStructureModal = function(productId) {
+  currentModalProductId = productId;
+  const produto = produtos.find(p => p.id === productId);
+  const estrutura = estruturas.find(e => e.produtoPaiId === productId);
+  const modal = document.getElementById('structureModal');
+  const modalContent = modal.querySelector('.modal-content');
+
+  modalContent.querySelector('.sap-title').textContent = `Estrutura e Processo: ${produto.codigo} - ${produto.descricao}`;
+
+  // Preenche a lista de componentes
+  const componentsList = modalContent.querySelector('.components-list');
+  componentsList.innerHTML = '';
+  if (estrutura?.componentes?.length > 0) {
+    estrutura.componentes.forEach((comp, index) => {
+      const compProduto = produtos.find(p => p.id === comp.componentId);
+      if (compProduto) {
+        componentsList.innerHTML += `
+          <div class="component" data-id="${comp.componentId}">
+            <input type="number" class="sequence-input" value="${index + 1}" readonly>
+            <span>${compProduto.codigo} - ${compProduto.descricao} (${compProduto.tipo})</span>
+            <div>
+              <input type="number" class="quantidade" value="${comp.quantidade}" min="0.001" step="0.001">
+              <span>${compProduto.unidade}</span>
+              <button class="btn-danger" onclick="removeComponentFromModal(this)">X</button>
+            </div>
+          </div>
+        `;
+      }
+    });
+  } else {
+    componentsList.innerHTML = '<div class="modal-item" style="color: #666;">Nenhum componente</div>';
+  }
+
+  // Preenche a lista de operações
+  const operationsList = modalContent.querySelector('.operations-list');
+  operationsList.innerHTML = '';
+  if (estrutura?.operacoes?.length > 0) {
+    const sortedOperacoes = [...operacoes].sort((a, b) => a.numero.localeCompare(b.numero));
+    const sortedRecursos = [...recursos].sort((a, b) => a.codigo.localeCompare(b.codigo));
+    estrutura.operacoes.forEach((op, index) => {
+      operationsList.innerHTML += `
+        <div class="operation">
+          <input type="number" class="sequence-input" value="${op.sequencia}" min="1" step="1">
+          <select class="operacao">
+            <option value="">Selecione a operação...</option>
+            ${sortedOperacoes.map(o => `<option value="${o.id}" ${o.id === op.operacaoId ? 'selected' : ''}>${o.numero} - ${o.operacao}</option>`).join('')}
+          </select>
+          <select class="recurso">
+            <option value="">Selecione o recurso...</option>
+            ${sortedRecursos.map(r => `<option value="${r.id}" ${r.id === op.recursoId ? 'selected' : ''}>${r.codigo} - ${r.maquina} (${r.setor})</option>`).join('')}
+          </select>
+          <input type="number" class="tempo" value="${op.tempo}" min="0.1" step="0.1">
+          <textarea class="descricao" maxlength="50" rows="1">${op.descricao || ''}</textarea>
+          <div class="operation-controls">
+            <button class="move-btn" onclick="moveOperationInModal(this, -1)">↑</button>
+            <button class="move-btn" onclick="moveOperationInModal(this, 1)">↓</button>
+            <button class="btn-danger" onclick="removeOperationFromModal(this)">X</button>
+          </div>
+        </div>
+      `;
+    });
+  } else {
+    operationsList.innerHTML = '<div class="modal-item" style="color: #666;">Nenhuma operação</div>';
+  }
+
+  modal.style.display = 'block';
+};
+
+window.closeStructureModal = function() {
+  document.getElementById('structureModal').style.display = 'none';
+  currentModalProductId = null;
+};
+
+window.addComponentToModal = function() {
+  const componentsList = document.querySelector('#structureModal .components-list');
+  const selectOptions = produtos
+    .filter(p => p.id !== currentModalProductId && !['PA'].includes(p.tipo))
+    .map(p => `<option value="${p.id}">${p.codigo} - ${p.descricao} (${p.tipo})</option>`).join('');
+
+  const component = document.createElement('div');
+  component.className = 'component';
+  component.innerHTML = `
+    <input type="number" class="sequence-input" value="${componentsList.querySelectorAll('.component').length + 1}" readonly>
+    <select class="component-select" onchange="updateComponentUnit(this)">
+      <option value="">Selecione o componente...</option>
+      ${selectOptions}
+    </select>
+    <div>
+      <input type="number" class="quantidade" value="1" min="0.001" step="0.001">
+      <span class="unit"></span>
+      <button class="btn-danger" onclick="removeComponentFromModal(this)">X</button>
+    </div>
+  `;
+  componentsList.appendChild(component);
+};
+
+window.updateComponentUnit = function(select) {
+  const componentDiv = select.closest('.component');
+  const productId = select.value;
+  const produto = produtos.find(p => p.id === productId);
+  componentDiv.querySelector('.unit').textContent = produto ? produto.unidade : '';
+  componentDiv.dataset.id = productId;
+};
+
+window.removeComponentFromModal = function(button) {
+  const componentsList = button.closest('.components-list');
+  button.closest('.component').remove();
+  updateModalComponentSequences(componentsList);
+};
+
+function updateModalComponentSequences(componentsList) {
+  componentsList.querySelectorAll('.component').forEach((comp, index) => {
+    comp.querySelector('.sequence-input').value = index + 1;
+  });
+}
+
+window.addOperationToModal = function() {
+  const operationsList = document.querySelector('#structureModal .operations-list');
+  const sortedOperacoes = [...operacoes].sort((a, b) => a.numero.localeCompare(b.numero));
+  const sortedRecursos = [...recursos].sort((a, b) => a.codigo.localeCompare(b.codigo));
+
+  const operation = document.createElement('div');
+  operation.className = 'operation';
+  operation.innerHTML = `
+    <input type="number" class="sequence-input" value="${operationsList.querySelectorAll('.operation').length + 1}" min="1" step="1">
+    <select class="operacao" required>
+      <option value="">Selecione a operação...</option>
+      ${sortedOperacoes.map(op => `<option value="${op.id}">${op.numero} - ${op.operacao}</option>`).join('')}
+    </select>
+    <select class="recurso" required>
+      <option value="">Selecione o recurso...</option>
+      ${sortedRecursos.map(rec => `<option value="${rec.id}">${rec.codigo} - ${rec.maquina} (${rec.setor})</option>`).join('')}
+    </select>
+    <input type="number" class="tempo" value="1" min="0.1" step="0.1">
+    <textarea class="descricao" maxlength="50" rows="1"></textarea>
+    <div class="operation-controls">
+      <button class="move-btn" onclick="moveOperationInModal(this, -1)">↑</button>
+      <button class="move-btn" onclick="moveOperationInModal(this, 1)">↓</button>
+      <button class="btn-danger" onclick="removeOperationFromModal(this)">X</button>
+    </div>
+  `;
+  operationsList.appendChild(operation);
+};
+
+window.moveOperationInModal = function(button, direction) {
+  const operation = button.closest('.operation');
+  const operationsList = operation.parentElement;
+  const operations = Array.from(operationsList.querySelectorAll('.operation'));
+  const index = operations.indexOf(operation);
+  const newIndex = index + direction;
+
+  if (newIndex >= 0 && newIndex < operations.length) {
+    if (direction === 1) {
+      operationsList.insertBefore(operations[newIndex], operation);
+    } else {
+      operationsList.insertBefore(operation, operations[newIndex]);
+    }
+    updateModalOperationSequences(operationsList);
+  }
+};
+
+window.removeOperationFromModal = function(button) {
+  const operationsList = button.closest('.operations-list');
+  button.closest('.operation').remove();
+  updateModalOperationSequences(operationsList);
+};
+
+function updateModalOperationSequences(operationsList) {
+  operationsList.querySelectorAll('.operation').forEach((op, index) => {
+    op.querySelector('.sequence-input').value = index + 1;
+  });
+}
+
+window.saveStructureFromModal = async function() {
+  if (!currentModalProductId) {
+    alert("Nenhum produto selecionado para salvar a estrutura.");
+    return;
+  }
+
+  const componentsList = document.querySelector('#structureModal .components-list');
+  const operationsList = document.querySelector('#structureModal .operations-list');
+
+  const components = [];
+  componentsList.querySelectorAll('.component').forEach(comp => {
+    const componentId = comp.dataset.id || comp.querySelector('.component-select')?.value;
+    const quantidade = parseFloat(comp.querySelector('.quantidade').value) || 1;
+    if (componentId && quantidade > 0) {
+      const produto = produtos.find(p => p.id === componentId);
+      components.push({
+        componentId,
+        quantidade,
+        unidade: produto.unidade
+      });
+    }
+  });
+
+  const operations = [];
+  operationsList.querySelectorAll('.operation').forEach(op => {
+    const sequencia = parseInt(op.querySelector('.sequence-input').value) || 1;
+    const operacaoId = op.querySelector('.operacao').value;
+    const recursoId = op.querySelector('.recurso').value;
+    const tempo = parseFloat(op.querySelector('.tempo').value) || 1;
+    const descricao = op.querySelector('.descricao').value;
+    if (operacaoId && recursoId && tempo > 0) {
+      operations.push({
+        sequencia,
+        operacaoId,
+        recursoId,
+        tempo,
+        descricao: descricao || ''
+      });
+    }
+  });
+
+  const now = new Date().toISOString();
+  const structureData = {
+    produtoPaiId: currentModalProductId,
+    componentes: components, // Corrigido de 'componentes' para 'components'
+    operacoes: operations,  // Mantido como 'operations' para consistência
+    dataCriacao: estruturas.find(e => e.produtoPaiId === currentModalProductId)?.dataCriacao || now,
+    dataUltimaAlteracao: now
+  };
+
+  try {
+    const q = query(collection(db, "estruturas"), where("produtoPaiId", "==", currentModalProductId));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      const docId = querySnapshot.docs[0].id;
+      await updateDoc(doc(db, "estruturas", docId), structureData);
+      const index = estruturas.findIndex(e => e.id === docId);
+      if (index !== -1) estruturas[index] = { id: docId, ...structureData };
+    } else {
+      const docRef = await addDoc(collection(db, "estruturas"), structureData);
+      structureData.id = docRef.id;
+      estruturas.push(structureData);
+    }
+
+    await carregarDados();
+    closeStructureModal();
+    alert("Estrutura salva com sucesso!");
+
+    // Recarregar a estrutura principal se o produto estiver aberto
+    const parentSelect = document.getElementById('parentProductSelect');
+    if (parentSelect.value === currentModalProductId) {
+      loadStructureForProduct();
+    }
+  } catch (error) {
+    console.error("Erro ao salvar estrutura do modal:", error);
+    alert("Erro ao salvar a estrutura: " + error.message);
+  }
+};
+
+window.closeStructureModal = function() {
+  document.getElementById('structureModal').style.display = 'none';
+};
+// Adicionar evento de clique para componentes e operações
+document.addEventListener('click', function(e) {
+  const component = e.target.closest('.component');
+  const operation = e.target.closest('.operation');
+  const modalItem = e.target.closest('.modal-item');
+
+  // Remove classe 'clicked' de todos os itens
+  document.querySelectorAll('.component.clicked, .operation.clicked, .modal-item.clicked').forEach(item => {
+    item.classList.remove('clicked');
+  });
+
+  // Adiciona classe 'clicked' ao item clicado
+  if (component) {
+    component.classList.add('clicked');
+  } else if (operation) {
+    operation.classList.add('clicked');
+  } else if (modalItem) {
+    modalItem.classList.add('clicked');
+  }
+});
+
+// Abrir o modal de desenho
+window.openDrawingModal = function(codigo, pdfLink) {
+  console.log(`Abrindo desenho para ${codigo} com link: ${pdfLink}`);
+  const modal = document.getElementById('drawingModal');
+  const title = document.getElementById('drawingModalTitle');
+  const image = document.getElementById('drawingImage');
+
+  title.textContent = `Visualização do Desenho: ${codigo}`;
+  image.src = '';
+
+  if (!pdfLink) {
+    image.alt = 'Nenhum desenho disponível';
+    modal.style.display = 'block';
+    alert(`Nenhum PDF associado ao código ${codigo}.`);
+    return;
+  }
+
+  // Abre o link do Mega.nz em uma nova aba
+  window.open(pdfLink, '_blank');
+  // Opcional: não abrir o modal, já que o PDF será exibido no navegador
+  // modal.style.display = 'block'; // Comente ou remova esta linha
+};
+
+// Fechar o modal de desenho
+window.closeDrawingModal = function() {
+  document.getElementById('drawingModal').style.display = 'none';
+};
+
+window.updateProductCost = async function(productId, newCost) {
+  try {
+    if (!confirm('Deseja atualizar o custo médio do produto com o valor calculado?')) {
+      return;
+    }
+
+    const productRef = doc(db, "produtos", productId);
+    await updateDoc(productRef, {
+      custoMedio: newCost,
+      dataUltimoCusto: new Date().toISOString()
+    });
+
+    // Atualiza o array local de produtos
+    const produtoIndex = produtos.findIndex(p => p.id === productId);
+    if (produtoIndex !== -1) {
+      produtos[produtoIndex].custoMedio = newCost;
+      produtos[produtoIndex].dataUltimoCusto = new Date().toISOString();
+    }
+
+    alert('Custo médio atualizado com sucesso!');
+  } catch (error) {
+    console.error("Erro ao atualizar custo:", error);
+    alert("Erro ao atualizar custo do produto");
+  }
+};
+
+async function calcularCustoMedio(produtoId) {
+  // Implementação para calcular o custo médio de um produto
+  // Você precisará acessar seus dados e calcular o custo médio aqui.
+  // Exemplo (substitua pela sua lógica):
+  const produto = produtos.find(p => p.id === produtoId);
+  if (produto && produto.custoUnitario) return produto.custoUnitario;
+  return 0; // Retorna 0 se não encontrar o produto ou o custo
+}
+
+
+async function buildCostStructure(productId, level = 0, quantidade = 1) {
+  const produto = produtos.find(p => p.id === productId);
+  const estrutura = estruturas.find(e => e.produtoPaiId === productId);
+  let semCusto = [];
+
+  let custoMaterial = 0;
+  let custoOperacoes = 0;
+
+  const node = {
+    produto,
+    level,
+    children: [],
+    operacoes: [],
+    quantidade,
+    custos: {
+      material: 0,
+      operacoes: 0,
+      total: 0,
+      unitario: 0
+    },
+    avisos: []
+  };
+
+  // Verifica se produto MP tem custo
+  if (produto.tipo === 'MP' && (!produto.custoUnitario || produto.custoUnitario === 0)) {
+    node.avisos.push(`Matéria prima ${produto.codigo} sem custo definido`);
+  }
+
+  // Adiciona custo unitário do produto se for MP
+  if (produto.tipo === 'MP') {
+    custoMaterial = (produto.custoUnitario || 0) * quantidade;
+  }
+
+  // Calcula custo das operações
+  if (estrutura?.operacoes) {
+    for (const op of estrutura.operacoes) {
+      const recurso = recursos.find(r => r.id === op.recursoId);
+      if (recurso && recurso.custoHora) {
+        const custoOperacao = (op.tempo / 60) * recurso.custoHora * quantidade;
+        custoOperacoes += custoOperacao;
+
+        node.operacoes.push({
+          operacao: operacoes.find(o => o.id === op.operacaoId),
+          recurso,
+          tempo: op.tempo,
+          custo: custoOperacao
+        });
+      }
+    }
+  }
+
+  // Calcula custo dos componentes
+  if (estrutura?.componentes) {
+    for (const comp of estrutura.componentes) {
+      const componenteProduto = produtos.find(p => p.id === comp.componentId);
+      if (componenteProduto) {
+        const quantidadeTotal = comp.quantidade * quantidade;
+
+        if (componenteProduto.tipo === 'SP' || componenteProduto.tipo === 'PA') {
+          const childNode = await buildCostStructure(comp.componentId, level + 1, quantidadeTotal);
+          childNode.quantidade = quantidadeTotal;
+          node.children.push(childNode);
+          custoMaterial += childNode.custos.total;
+        } else {
+          const custoUnitario = await calcularCustoMedio(comp.componentId);
+          const custoTotal = custoUnitario * quantidadeTotal;
+          custoMaterial += custoTotal;
+
+          node.children.push({
+            produto: componenteProduto,
+            quantidade: quantidadeTotal,
+            custoUnitario,
+            custoTotal,
+            level: level + 1
+          });
+        }
+      }
+    }
+  }
+
+  node.custos = {
+    material: custoMaterial,
+    operacoes: custoOperacoes,
+    total: custoMaterial + custoOperacoes
+  };
+  return node;
+}
+
+async function loadStructureForProduct() {
+  const productId = document.getElementById('parentProductSelect').value;
+  const structureTree = document.getElementById('structureTree');
+  const saveButton = document.querySelector('.btn-success');
+
+  structureTree.innerHTML = '';
+  saveButton.disabled = true; // Desativa o botão por padrão
+  initialStructureState = null; // Reseta o estado inicial
+  hasChanges = false; // Reseta o flag de alterações
+
+  if (!productId) return;
+
+  const produtoPai = produtos.find(p => p.id === productId);
+  const existingStructure = estruturas.find(e => e.produtoPaiId === productId);
+
+  if (produtoPai) {
+    const costStructure = await buildCostStructure(productId);
+    const folder = createFolder(produtoPai, existingStructure);
+    populateFolderWithCostStructure(folder, costStructure);
+    if (existingStructure) {
+      initialStructureState = JSON.parse(JSON.stringify({
+        componentes: existingStructure.componentes || [],
+        operacoes: existingStructure.operacoes || []
+      }));
+    } else {
+      saveButton.disabled = false; // Estrutura nova, ativa o botão
+    }
+    structureTree.appendChild(folder);
+    setupDragAndDrop();
+    setupChangeListeners(folder);
+  }
+}
+
+
+function populateFolderWithCostStructure(folder, costStructure) {
+  const componentsList = folder.querySelector('.components-list');
+  const operationsList = folder.querySelector('.operations-list');
+  const produto = produtos.find(p => p.id === costStructure.produto.id);
+
+  // Exibe avisos se houver
+  if (costStructure.avisos && costStructure.avisos.length > 0) {
+    const warningDiv = document.createElement('div');
+    warningDiv.className = 'warning-summary';
+    warningDiv.style.color = '#ff6b6b';
+    warningDiv.style.padding = '10px';
+    warningDiv.style.marginBottom = '10px';
+    warningDiv.innerHTML = `
+      <strong>Atenção:</strong><br>
+      ${costStructure.avisos.join('<br>')}
+    `;
+    folder.insertBefore(warningDiv, folder.firstChild);
+  }
+
+  const costSummary = document.createElement('div');
+  costSummary.className = 'cost-summary';
+  const custoUnitario = costStructure.custos.total / (costStructure.quantidade || 1);
+  costSummary.innerHTML = `
+    <div class="cost-badge">Custo Material: R$ ${costStructure.custos.material.toFixed(2)}</div>
+    <div class="cost-badge">Custo Operações: R$ ${costStructure.custos.operacoes.toFixed(2)}</div>
+    <div class="cost-badge cost-badge-total">Custo Total: R$ ${costStructure.custos.total.toFixed(2)}</div>
+    <div class="cost-badge cost-badge-unit">
+      Custo Unitário: R$ ${custoUnitario.toFixed(2)}
+      <button onclick="updateProductCost('${costStructure.produto.id}', ${custoUnitario})" 
+              class="btn-primary" style="margin-left: 10px; padding: 2px 5px; font-size: 12px;">
+        Atualizar Custo Médio
+      </button>
+    </div>
+  `;
+  folder.insertBefore(costSummary, folder.querySelector('.folder-content'));
+
+  // Adiciona operações
+  costStructure.operacoes.forEach(op => {
+    const operation = document.createElement('div');
+    operation.className = 'operation';
+    operation.innerHTML = `
+      <span>${op.operacao.numero} - ${op.operacao.operacao}</span>
+      <span>${op.recurso.codigo} - ${op.recurso.maquina}</span>
+      <span>${op.tempo} min</span>
+      <span>R$ ${op.custo.toFixed(2)}</span>
+    `;
+    operationsList.appendChild(operation);
+    folder.querySelector('.process-section').classList.add('open');
+  });
+
+  // Adiciona componentes recursivamente
+  function addComponent(comp) {
+    const component = document.createElement('div');
+    component.className = 'component';
+    component.innerHTML = `
+      <span>${comp.produto.codigo} - ${comp.produto.descricao}</span>
+      <span>${comp.quantidade} ${comp.produto.unidade}</span>
+      <span>R$ ${comp.custoTotal.toFixed(2)}</span>
+    `;
+    componentsList.appendChild(component);
+    folder.querySelector('.structure-section').classList.add('open');
+
+    if (comp.children) {
+      comp.children.forEach(child => addComponent(child));
+    }
+  }
+
+  costStructure.children.forEach(comp => addComponent(comp));
+}
+
+
+function createTreeNode(node) {
+  const div = document.createElement('div');
+  div.className = `tree-item ${node.level > 0 ? 'tree-item-child' : ''}`;
+
+  // Informações do produto
+  const produtoInfo = document.createElement('div');
+  produtoInfo.innerHTML = `
+    <strong>${node.produto.codigo} - ${node.produto.descricao}</strong>
+    ${node.quantidade ? ` (${node.quantidade} ${node.produto.unidade})` : ''}
+    <div class="cost-summary">
+      <span class="cost-badge">
+        Custo Material: R$ ${node.custos.material.toFixed(2)}
+      </span>
+      <span class="cost-badge">
+        Custo Operações: R$ ${node.custos.operacoes.toFixed(2)}
+      </span>
+      <span class="cost-badge cost-badge-total">
+        Custo Total: R$ ${node.custos.total.toFixed(2)}
+      </span>
+      ${node.quantidade > 1 ? `
+        <span class="cost-badge cost-badge-unit">
+          Custo Unitário: R$ ${(node.custos.total / node.quantidade).toFixed(2)}
+        </span>
+      ` : ''}
+    </div>
+  `;
+  div.appendChild(produtoInfo);
+
+  // Adiciona filhos recursivamente
+  node.children.forEach(child => div.appendChild(createTreeNode(child)));
+  return div;
+}
+
+function calcularCustos(estrutura) {
+  let custoMaterial = 0;
+  let custoMaoDeObra = 0;
+
+  if (estrutura && estrutura.componentes) {
+    estrutura.componentes.forEach(componente => {
+      const produto = produtos.find(p => p.id === componente.componentId);
+      if (produto && produto.custoUnitario) {
+        custoMaterial += produto.custoUnitario * componente.quantidade;
+      }
+    });
+  }
+
+  if (estrutura && estrutura.operacoes) {
+    estrutura.operacoes.forEach(operacao => {
+      const recurso = recursos.find(r => r.id === operacao.recursoId);
+      if (recurso && recurso.custoHora) {
+        custoMaoDeObra += (operacao.tempo / 60) * recurso.custoHora;
+      }
+    });
+  }
+
+  return {
+    material: custoMaterial,
+    maoDeObra: custoMaoDeObra,
+    total: custoMaterial + custoMaoDeObra
+  };
+}
+
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
+</script>
+<!-- Modal de Estrutura do Produto -->
+<div id="structureModal" class="modal">
+<div class="modal-content" style="max-width: 800px; padding: 15px;">
+  <span class="close-button" onclick="closeStructureModal()">×</span>
+  <div class="sap-title">Estrutura e Processo</div>
+  <div style="margin-top: 8px;">
+    <div class="section-title" style="font-size: 13px; margin-bottom: 5px;">Componentes</div>
+    <div class="components-list" style="max-height: 200px; overflow-y: auto; font-size: 12px;"></div>
+    <button class="btn-primary" onclick="addComponentToModal()" style="margin-top: 5px;">Adicionar Componente</button>
+  </div>
+  <div style="margin-top: 8px;">
+    <div class="section-title" style="font-size: 13px; margin-bottom: 5px;">Processo (Operações)</div>
+    <div class="operations-list" style="max-height: 200px; overflow-y: auto; font-size: 12px;"></div>
+    <button class="btn-primary" onclick="addOperationToModal()" style="margin-top: 5px;">Adicionar Operação</button>
+  </div>
+  <div class="sap-buttons" style="margin-top: 10px;">
+    <button class="btn-success" onclick="saveStructureFromModal()">Salvar Alterações</button>
+    <button class="btn-primary" onclick="closeStructureModal()">Fechar</button>
+  </div>
+</div>
+</div>
+<!-- Modal de Visualização do Desenho -->
+<div id="drawingModal" class="modal">
+  <div class="modal-content" style="max-width: 600px; padding: 15px;">
+    <span class="close-button" onclick="closeDrawingModal()">×</span>
+    <div class="sap-title" id="drawingModalTitle">Visualização do Desenho</div>
+    <div id="drawingThumbnail" style="text-align: center; margin-top: 10px; max-height: 400px; overflow-y: auto;">
+      <img id="drawingImage" style="max-width: 100%; border: 1px solid var(--border-color); border-radius: 4px;" alt="Thumbnail do Desenho">
+    </div>
+    <div class="sap-buttons" style="margin-top: 10px;">
+      <button class="btn-primary" onclick="closeDrawingModal()">Fechar</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relatório de Produtos por Grupo e Família</title>
+  <style>
+    :root {
+      --primary-color: #0854a0;
+      --primary-hover: #0a4d8c;
+      --secondary-color: #f0f3f6;
+      --border-color: #d4d4d4;
+      --text-color: #333;
+      --text-secondary: #666;
+      --success-color: #107e3e;
+      --success-hover: #0d6e36;
+      --danger-color: #bb0000;
+      --danger-hover: #a30000;
+      --warning-color: #e9730c;
+      --header-bg: #354a5f;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 20px;
+      background-color: #f7f7f7;
+      color: var(--text-color);
+    }
+
+    .container {
+      width: 90%;
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+      background-color: var(--header-bg);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px 8px 0 0;
+      margin: -20px -20px 20px -20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      font-weight: 500;
+      margin: 0;
+    }
+
+    .form-title {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 20px;
+      color: var(--primary-color);
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .groups-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    .groups-table th,
+    .groups-table td {
+      padding: 12px 15px;
+      border: 1px solid var(--border-color);
+      text-align: left;
+    }
+
+    .groups-table th {
+      background-color: var(--secondary-color);
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .groups-table tr:hover {
+      background-color: #f8f9fa;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .status-ativo {
+      background-color: #e5f2e5;
+      color: var(--success-color);
+    }
+
+    .status-inativo {
+      background-color: #ffeaea;
+      color: var(--danger-color);
+    }
+
+    .status-bloqueado {
+      background-color: #fff3e5;
+      color: var(--warning-color);
+    }
+
+    .no-data {
+      font-style: italic;
+      color: var(--text-secondary);
+      margin: 20px 0;
+      font-size: 14px;
+    }
+
+    h2, h3 {
+      color: var(--primary-color);
+      margin: 20px 0 10px;
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 500;
+    }
+
+    h3 {
+      font-size: 16px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Relatório de Produtos por Grupo e Família</h1>
+      <button class="btn-primary" onclick="window.print()">Imprimir Relatório</button>
+    </div>
+
+    <div class="form-title">Relatório de Produtos</div>
+    <div id="reportContent"></div>
+
+    <p style="margin-top: 20px; font-size: 12px; color: var(--text-secondary);">
+      Relatório gerado em <span id="reportDate"></span>
+    </p>
+  </div>
+
+  <script>
+    // Função para obter descrição do tipo
+    function getTipoDescricao(tipo) {
+      const tipos = {
+        'PA': 'Produto Acabado',
+        'SP': 'Sub-Produto',
+        'MP': 'Matéria Prima',
+        'HR': 'Hora Máquina',
+        'SV': 'Serviço',
+        'TA': 'Taxas'
+      };
+      return tipos[tipo] || tipo;
+    }
+
+    // Função para obter descrição do status
+    function getStatusDescricao(status) {
+      const statusDesc = {
+        'ativo': 'Ativo',
+        'inativo': 'Inativo',
+        'bloqueado': 'Bloqueado'
+      };
+      return statusDesc[status] || status;
+    }
+
+    // Função para obter estoque
+    function getEstoque(produtoId, estoques) {
+      const estoque = estoques.find(e => e.produtoId === produtoId);
+      return estoque ? estoque.saldo : 0;
+    }
+
+    // Função para gerar o relatório
+    function generateReport(produtos, grupos, familias, estoques) {
+      const reportContent = document.getElementById('reportContent');
+      let html = '';
+
+      // Ordena grupos por código
+      const sortedGrupos = [...grupos].sort((a, b) => a.codigoGrupo.localeCompare(b.codigoGrupo));
+
+      if (sortedGrupos.length === 0) {
+        html += '<p class="no-data">Nenhum grupo cadastrado.</p>';
+      } else {
+        sortedGrupos.forEach(grupo => {
+          html += `<h2>${grupo.codigoGrupo} - ${grupo.nomeGrupo}</h2>`;
+
+          // Filtra famílias do grupo atual
+          const familiasDoGrupo = familias
+            .filter(f => f.grupo === grupo.codigoGrupo)
+            .sort((a, b) => a.codigoFamilia.localeCompare(b.codigoFamilia));
+
+          if (familiasDoGrupo.length === 0) {
+            html += '<p class="no-data">Nenhuma família cadastrada neste grupo.</p>';
+          } else {
+            familiasDoGrupo.forEach(familia => {
+              html += `<h3>${familia.codigoFamilia} - ${familia.nomeFamilia}</h3>`;
+
+              // Filtra produtos da família atual
+              const produtosDaFamilia = produtos
+                .filter(p => p.grupo === grupo.codigoGrupo && p.familia === familia.codigoFamilia)
+                .sort((a, b) => a.codigo.localeCompare(b.codigo));
+
+              if (produtosDaFamilia.length === 0) {
+                html += '<p class="no-data">Nenhum produto cadastrado nesta família.</p>';
+              } else {
+                html += `
+                  <table class="groups-table">
+                    <thead>
+                      <tr>
+                        <th>Código</th>
+                        <th>Descrição</th>
+                        <th>Tipo</th>
+                        <th>Unidade</th>
+                        <th>Estoque</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                `;
+
+                produtosDaFamilia.forEach(product => {
+                  const estoque = getEstoque(product.id, estoques);
+                  html += `
+                    <tr>
+                      <td>${product.codigo || '-'}</td>
+                      <td>${product.descricao || '-'}</td>
+                      <td>${getTipoDescricao(product.tipo)}</td>
+                      <td>${product.unidade || '-'}</td>
+                      <td>${estoque} ${product.unidade || ''}</td>
+                      <td><span class="status-badge status-${product.status || 'ativo'}">${getStatusDescricao(product.status || 'ativo')}</span></td>
+                    </tr>
+                  `;
+                });
+
+                html += `
+                    </tbody>
+                  </table>
+                `;
+              }
+            });
+          }
+        });
+      }
+
+      reportContent.innerHTML = html;
+
+      // Define a data de geração do relatório
+      document.getElementById('reportDate').textContent = new Date().toLocaleString('pt-BR');
+    }
+
+    // Função para carregar dados do window.opener (contexto da janela pai)
+    function loadDataFromParent() {
+      try {
+        if (window.opener && window.opener.produtos && window.opener.grupos && window.opener.familias && window.opener.estoques) {
+          generateReport(
+            window.opener.produtos,
+            window.opener.grupos,
+            window.opener.familias,
+            window.opener.estoques
+          );
+        } else {
+          document.getElementById('reportContent').innerHTML = '<p class="no-data">Erro: Dados não disponíveis.</p>';
+        }
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+        document.getElementById('reportContent').innerHTML = '<p class="no-data">Erro ao carregar dados.</p>';
+      }
+    }
+
+    // Carrega os dados ao abrir a página
+    window.onload = loadDataFromParent;
+  </script>
+</body>
+</html>

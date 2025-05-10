@@ -1,0 +1,249 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relatório de Pedidos de Venda</title>
+  <style>
+    @media print {
+      .no-print { display: none; }
+      .page-break { page-break-after: always; }
+    }
+    
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    
+    .filters {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #f5f5f5;
+      border-radius: 5px;
+    }
+    
+    .filter-row {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 10px;
+    }
+    
+    .filter-group {
+      flex: 1;
+    }
+    
+    .filter-group label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    
+    .filter-group input, .filter-group select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    
+    .order-card {
+      border: 1px solid #ddd;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+    }
+    
+    .order-header {
+      border-bottom: 2px solid #333;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+    }
+    
+    .order-details {
+      margin-bottom: 15px;
+    }
+    
+    .order-products table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 15px;
+    }
+    
+    .order-products th, .order-products td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    
+    .order-total {
+      text-align: right;
+      font-weight: bold;
+    }
+    
+    .btn {
+      padding: 8px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    
+    .btn-primary {
+      background: #0854a0;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print">
+    <div class="filters">
+      <div class="filter-row">
+        <div class="filter-group">
+          <label>Data Inicial:</label>
+          <input type="date" id="startDate">
+        </div>
+        <div class="filter-group">
+          <label>Data Final:</label>
+          <input type="date" id="endDate">
+        </div>
+        <div class="filter-group">
+          <label>Status:</label>
+          <select id="statusFilter">
+            <option value="">Todos</option>
+            <option value="Pendente">Pendente</option>
+            <option value="Em Análise">Em Análise</option>
+            <option value="Aprovado">Aprovado</option>
+            <option value="Faturado">Faturado</option>
+            <option value="Cancelado">Cancelado</option>
+          </select>
+        </div>
+      </div>
+      <div class="filter-row">
+        <div class="filter-group">
+          <label>Cliente:</label>
+          <input type="text" id="clientFilter" placeholder="Nome do cliente...">
+        </div>
+        <div class="filter-group">
+          <label>Número do Pedido:</label>
+          <input type="text" id="orderNumber" placeholder="Número...">
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="generateReport()">Gerar Relatório</button>
+    <button class="btn btn-primary" onclick="window.print()">Imprimir</button>
+    <button class="btn" onclick="window.location.href='pedidos_venda.html'">Voltar</button>
+  </div>
+
+  <div id="reportContent"></div>
+
+  <script type="module">
+    import { db } from './firebase-config.js';
+    import { collection, getDocs, query, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    let pedidos = [];
+    let clientes = [];
+    let produtos = [];
+
+    window.onload = async function() {
+      await loadData();
+    };
+
+    async function loadData() {
+      const [pedidosSnap, clientesSnap, produtosSnap] = await Promise.all([
+        getDocs(collection(db, "pedidosVenda")),
+        getDocs(collection(db, "fornecedores")),
+        getDocs(collection(db, "produtos"))
+      ]);
+
+      pedidos = pedidosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      clientes = clientesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      produtos = produtosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
+
+    window.generateReport = function() {
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      const status = document.getElementById('statusFilter').value;
+      const clientFilter = document.getElementById('clientFilter').value.toLowerCase();
+      const orderNumber = document.getElementById('orderNumber').value;
+
+      let filteredOrders = pedidos;
+
+      if (startDate && endDate) {
+        filteredOrders = filteredOrders.filter(order => {
+          const orderDate = new Date(order.dataCriacao.seconds * 1000);
+          return orderDate >= new Date(startDate) && orderDate <= new Date(endDate + ' 23:59:59');
+        });
+      }
+
+      if (status) {
+        filteredOrders = filteredOrders.filter(order => order.status === status);
+      }
+
+      if (clientFilter) {
+        filteredOrders = filteredOrders.filter(order => {
+          const cliente = clientes.find(c => c.id === order.clienteId);
+          return cliente?.nome.toLowerCase().includes(clientFilter);
+        });
+      }
+
+      if (orderNumber) {
+        filteredOrders = filteredOrders.filter(order => 
+          order.numero.includes(orderNumber)
+        );
+      }
+
+      const reportContent = document.getElementById('reportContent');
+      reportContent.innerHTML = '';
+
+      filteredOrders.forEach(order => {
+        const cliente = clientes.find(c => c.id === order.clienteId);
+        const produto = produtos.find(p => p.id === order.produtoId);
+
+        const orderElement = document.createElement('div');
+        orderElement.className = 'order-card page-break';
+        orderElement.innerHTML = `
+          <div class="order-header">
+            <h2>Pedido de Venda Nº ${order.numero}</h2>
+            <p>Data: ${new Date(order.dataCriacao.seconds * 1000).toLocaleDateString()}</p>
+          </div>
+          <div class="order-details">
+            <p><strong>Cliente:</strong> ${cliente?.nome || 'N/A'}</p>
+            <p><strong>Status:</strong> ${order.status}</p>
+            <p><strong>Condição de Pagamento:</strong> ${order.condicaoPagamento}</p>
+            <p><strong>Data de Entrega:</strong> ${new Date(order.dataEntrega.seconds * 1000).toLocaleDateString()}</p>
+            <p><strong>Tipo de Frete:</strong> ${order.freteTipo}</p>
+            <p><strong>Transportadora:</strong> ${order.transportadora}</p>
+          </div>
+          <div class="order-products">
+            <table>
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th>Quantidade</th>
+                  <th>Valor Unitário</th>
+                  <th>Valor Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>${produto?.descricao || 'N/A'}</td>
+                  <td>${order.quantidade}</td>
+                  <td>R$ ${order.valorUnitario.toFixed(2)}</td>
+                  <td>R$ ${order.valorTotal.toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="order-total">
+            <p>Subtotal: R$ ${order.valorTotal.toFixed(2)}</p>
+            <p>Frete: R$ ${(order.valorFrete || 0).toFixed(2)}</p>
+            <p>Total: R$ ${(order.valorTotal + (order.valorFrete || 0)).toFixed(2)}</p>
+          </div>
+        `;
+        
+        reportContent.appendChild(orderElement);
+      });
+    };
+  </script>
+</body>
+</html>

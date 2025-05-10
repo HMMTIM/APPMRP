@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alterar Ordem de Produção</title>
+  <style>
+    :root {
+      --primary-color: #0854a0;
+      --primary-hover: #0a4d8c;
+      --secondary-color: #f0f3f6;
+      --border-color: #d4d4d4;
+      --text-color: #333;
+      --text-secondary: #666;
+      --success-color: #107e3e;
+      --success-hover: #0d6e36;
+      --danger-color: #bb0000;
+      --danger-hover: #a30000;
+      --header-bg: #f5f5f5;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f7f7f7;
+      color: var(--text-color);
+    }
+
+    .form-container {
+      width: 95%;
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0;
+      background-color: #fff;
+      border-radius: 4px;
+      box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .page-header {
+      background-color: var(--header-bg);
+      padding: 15px 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    h1 {
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--primary-color);
+      margin: 0;
+    }
+
+    .content-area {
+      padding: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 5px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    input[type="text"], 
+    input[type="number"], 
+    input[type="date"], 
+    select, 
+    textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 3px;
+      font-size: 14px;
+      color: var(--text-color);
+      background-color: #fff;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary-color);
+      outline: none;
+    }
+
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-success {
+      background-color: var(--success-color);
+      color: #fff;
+    }
+
+    .btn-success:hover {
+      background-color: var(--success-hover);
+    }
+
+    .component-item {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+
+    .component-item select {
+      flex: 2;
+    }
+
+    .component-item input[type="number"] {
+      width: 100px;
+    }
+
+    .component-item select.unidade {
+      width: 80px;
+    }
+
+    .remove-btn {
+      background-color: var(--danger-color);
+      color: #fff;
+    }
+
+    .remove-btn:hover {
+      background-color: var(--danger-hover);
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .back-button {
+      padding: 10px 20px;
+      background-color: #6c757d;
+      color: #fff;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      margin-top: 20px;
+      width: 100%;
+    }
+
+    .back-button:hover {
+      background-color: #5a6268;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <div class="page-header">
+      <h1>Alterar Ordem de Produção</h1>
+    </div>
+
+    <div class="content-area">
+      <form id="editOpForm">
+        <div class="form-group">
+          <label for="opSelect">Selecionar Ordem de Produção</label>
+          <select id="opSelect" onchange="loadOpData()" required>
+            <option value="">Selecione uma OP...</option>
+            <!-- Preenchido dinamicamente -->
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="produto">Produto</label>
+          <select id="produto" required>
+            <option value="">Selecione o produto...</option>
+            <!-- Preenchido dinamicamente -->
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="quantidade">Quantidade</label>
+          <input type="number" id="quantidade" min="0.001" step="0.001" required>
+        </div>
+
+        <div class="form-group">
+          <label for="dataEntrega">Data de Entrega</label>
+          <input type="date" id="dataEntrega" required>
+        </div>
+
+        <div class="form-group">
+          <label for="prioridade">Prioridade</label>
+          <select id="prioridade" required>
+            <option value="Baixa">Baixa</option>
+            <option value="Média">Média</option>
+            <option value="Alta">Alta</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="observacoes">Observações</label>
+          <textarea id="observacoes"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Componentes</label>
+          <div id="componentesList">
+            <!-- Componentes carregados dinamicamente -->
+          </div>
+          <button type="button" class="btn-primary" onclick="addComponent()">Adicionar Componente</button>
+        </div>
+
+        <div class="action-buttons">
+          <button type="submit" class="btn-success">Salvar Alterações</button>
+        </div>
+      </form>
+
+      <button class="back-button" onclick="window.location.href='ordens_producao.html'">Voltar</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { db } from './firebase-config.js';
+    import { 
+      collection, 
+      getDocs, 
+      doc, 
+      updateDoc, 
+      addDoc 
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    let ordensProducao = [];
+    let produtos = [];
+    let estoques = [];
+
+    // Carrega dados iniciais
+    window.onload = async function() {
+      try {
+        const [opsSnap, produtosSnap, estoquesSnap] = await Promise.all([
+          getDocs(collection(db, "ordensProducao")),
+          getDocs(collection(db, "produtos")),
+          getDocs(collection(db, "estoques"))
+        ]);
+
+        ordensProducao = opsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        produtos = produtosSnap.docs.reduce((acc, doc) => {
+          acc[doc.id] = doc.data().descricao;
+          return acc;
+        }, {});
+        estoques = estoquesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        populateOpSelect();
+        populateProdutoSelect();
+      } catch (error) {
+        console.error("Erro ao carregar dados:", error);
+        alert("Erro ao carregar dados. Tente novamente.");
+      }
+    };
+
+    // Preenche o select de OPs com número baseado na data
+    function populateOpSelect() {
+      const opSelect = document.getElementById('opSelect');
+      opSelect.innerHTML = '<option value="">Selecione uma OP...</option>';
+      ordensProducao.forEach((op, index) => {
+        const data = new Date(op.dataEntrega.seconds * 1000);
+        const numeroOp = `OP-${data.getFullYear()}${String(data.getMonth() + 1).padStart(2, '0')}${String(index + 1).padStart(3, '0')}`;
+        opSelect.innerHTML += `<option value="${op.id}">${numeroOp} - ${produtos[op.produtoId]}</option>`;
+      });
+    }
+
+    // Preenche o select de produtos
+    function populateProdutoSelect() {
+      const produtoSelect = document.getElementById('produto');
+      produtoSelect.innerHTML = '<option value="">Selecione o produto...</option>';
+      Object.entries(produtos).forEach(([id, descricao]) => {
+        produtoSelect.innerHTML += `<option value="${id}">${descricao}</option>`;
+      });
+    }
+
+    // Carrega os dados da OP selecionada
+    window.loadOpData = function() {
+      const opId = document.getElementById('opSelect').value;
+      if (!opId) return;
+
+      const op = ordensProducao.find(o => o.id === opId);
+      if (!op) return;
+
+      document.getElementById('produto').value = op.produtoId;
+      document.getElementById('quantidade').value = op.quantidade;
+      document.getElementById('dataEntrega').value = new Date(op.dataEntrega.seconds * 1000).toISOString().split('T')[0];
+      document.getElementById('prioridade').value = op.prioridade;
+      document.getElementById('observacoes').value = op.observacoes || '';
+
+      const componentesList = document.getElementById('componentesList');
+      componentesList.innerHTML = '';
+      if (op.materiaisNecessarios) {
+        for (const comp of op.materiaisNecessarios) {
+          const produto = produtos[comp.produtoId];
+          componentesList.innerHTML += `
+            <div class="component-item">
+              <select>
+                ${Object.entries(produtos).map(([id, descricao]) => `<option value="${id}" ${comp.produtoId === id ? 'selected' : ''}>${descricao}</option>`).join('')}
+              </select>
+              <input type="number" value="${comp.quantidade}" min="0.001" step="0.001">
+              <select class="unidade">
+                <option value="PC" ${comp.unidade === 'PC' ? 'selected' : ''}>PC</option>
+                <option value="KG" ${comp.unidade === 'KG' ? 'selected' : ''}>KG</option>
+              </select>
+              <button type="button" class="remove-btn" onclick="removeComponent(this)">Remover</button>
+            </div>
+          `;
+        }
+      }
+    };
+
+    // Adiciona um novo componente
+    window.addComponent = function() {
+      const componentesList = document.getElementById('componentesList');
+      componentesList.innerHTML += `
+        <div class="component-item">
+          <select>
+            ${Object.entries(produtos).map(([id, descricao]) => `<option value="${id}">${descricao}</option>`).join('')}
+          </select>
+          <input type="number" value="1" min="0.001" step="0.001">
+          <select class="unidade">
+            <option value="PC">PC</option>
+            <option value="KG" selected>KG</option>
+          </select>
+          <button type="button" class="remove-btn" onclick="removeComponent(this)">Remover</button>
+        </div>
+      `;
+    };
+
+    // Remove um componente
+    window.removeComponent = function(button) {
+      button.closest('.component-item').remove();
+    };
+
+    // Salva as alterações da OP
+    document.getElementById('editOpForm').addEventListener('submit', async function(event) {
+      event.preventDefault();
+
+      const opId = document.getElementById('opSelect').value;
+      const produtoId = document.getElementById('produto').value;
+      const quantidade = parseFloat(document.getElementById('quantidade').value);
+      const dataEntrega = document.getElementById('dataEntrega').value;
+      const prioridade = document.getElementById('prioridade').value;
+      const observacoes = document.getElementById('observacoes').value;
+
+      const componentes = [];
+      const componentIds = new Set();
+      let hasInvalidComponent = false;
+
+      document.querySelectorAll('#componentesList .component-item').forEach(item => {
+        const componentId = item.querySelector('select').value;
+        const quantidadeComponente = parseFloat(item.querySelector('input[type="number"]').value);
+        const unidade = item.querySelector('.unidade').value;
+
+        if (!componentId || !quantidadeComponente || !unidade) {
+          hasInvalidComponent = true;
+          return;
+        }
+
+        if (componentIds.has(componentId)) {
+          alert('Não é permitido usar o mesmo componente mais de uma vez na ordem.');
+          hasInvalidComponent = true;
+          return;
+        }
+
+        componentIds.add(componentId);
+        componentes.push({
+          produtoId: componentId,
+          quantidade: quantidadeComponente,
+          unidade
+        });
+      });
+
+      if (hasInvalidComponent) {
+        alert('Por favor, preencha todos os campos dos componentes corretamente.');
+        return;
+      }
+
+      try {
+        const opRef = doc(db, "ordensProducao", opId);
+        const op = ordensProducao.find(o => o.id === opId);
+
+        // Reverter o empenho anterior
+        if (op.materiaisNecessarios) {
+          for (const material of op.materiaisNecessarios) {
+            await updateInventory(material.produtoId, material.quantidade, 'entrada', material.unidade);
+          }
+        }
+
+        // Validar estoque antes de empenhar
+        for (const componente of componentes) {
+          const estoqueRef = estoques.find(e => e.produtoId === componente.produtoId);
+          let quantidadeAjustada = componente.quantidade;
+          if (componente.unidade === "PC") {
+            quantidadeAjustada = componente.quantidade * 0.5; // Ajuste o fator de conversão
+          }
+          if (estoqueRef && estoqueRef.saldo < quantidadeAjustada) {
+            throw new Error(`Estoque insuficiente para ${produtos[componente.produtoId]}: ${estoqueRef.saldo} KG disponível`);
+          }
+        }
+
+        // Atualizar a ordem de produção
+        await updateDoc(opRef, {
+          produtoId,
+          quantidade,
+          unidade: "KG",
+          dataEntrega: new Date(dataEntrega),
+          prioridade,
+          observacoes,
+          materiaisNecessarios: componentes
+        });
+
+        // Aplicar novo empenho
+        for (const componente of componentes) {
+          await updateInventory(componente.produtoId, componente.quantidade, 'saida', componente.unidade);
+        }
+
+        alert('Ordem de produção atualizada com sucesso!');
+        window.location.replace('ordens_producao.html');
+      } catch (error) {
+        console.error("Erro ao atualizar ordem de produção:", error);
+        alert(`Erro: ${error.message}`);
+      }
+    });
+
+    // Atualiza o estoque no Firestore
+    async function updateInventory(produtoId, quantidade, tipo, unidade) {
+      const estoqueRef = estoques.find(e => e.produtoId === produtoId);
+
+      // Conversão para KG (estoque sempre em KG)
+      let quantidadeAjustada = quantidade;
+      if (unidade === "PC") {
+        quantidadeAjustada = quantidade * 0.5; // Ajuste o fator de conversão real
+      }
+
+      if (estoqueRef) {
+        const novoSaldo = tipo === 'entrada' 
+          ? estoqueRef.saldo + quantidadeAjustada 
+          : estoqueRef.saldo - quantidadeAjustada;
+
+        await updateDoc(doc(db, "estoques", estoqueRef.id), {
+          saldo: novoSaldo,
+          unidade: "KG",
+          ultimaMovimentacao: new Date()
+        });
+
+        estoqueRef.saldo = novoSaldo;
+      } else {
+        const novoEstoque = {
+          produtoId,
+          saldo: tipo === 'entrada' ? quantidadeAjustada : -quantidadeAjustada,
+          unidade: "KG",
+          ultimaMovimentacao: new Date()
+        };
+
+        const docRef = await addDoc(collection(db, "estoques"), novoEstoque);
+        novoEstoque.id = docRef.id;
+        estoques.push(novoEstoque);
+      }
+    }
+  </script>
+</body>
+</html>

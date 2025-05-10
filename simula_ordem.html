@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulação de Ordem de Produção</title>
+    <!-- Atualizar para imports modulares do Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .form-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .report-section {
+            display: none;
+            margin-top: 20px;
+        }
+        .report-section.active {
+            display: block;
+        }
+        .report-card {
+            background-color: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #4CAF50;
+        }
+        .report-card h2 {
+            margin-top: 0;
+            color: #333;
+            cursor: pointer;
+        }
+        .report-content {
+            display: none;
+        }
+        .report-content.active {
+            display: block;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        .highlight-missing {
+            background-color: #ffebee;
+        }
+        .highlight-reserved {
+            background-color: #e8f5e9;
+        }
+        .loading, .error {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        .error {
+            color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Simulação de Ordem de Produção</h1>
+
+        <div class="form-section">
+            <div class="form-group">
+                <label for="productSelect">Produto:</label>
+                <select id="productSelect">
+                    <option value="">Selecione o produto...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="quantity">Quantidade:</label>
+                <input type="number" id="quantity" min="0.001" step="0.001" placeholder="Digite a quantidade">
+            </div>
+            <div class="form-group">
+                <label for="dueDate">Data de Entrega:</label>
+                <input type="date" id="dueDate">
+            </div>
+            <div class="form-group">
+                <label for="priority">Prioridade:</label>
+                <select id="priority">
+                    <option value="normal">Normal</option>
+                    <option value="alta">Alta</option>
+                    <option value="urgente">Urgente</option>
+                </select>
+            </div>
+            <button onclick="runOrderSimulation()">Simular Ordem</button>
+        </div>
+
+        <div id="loading" class="loading">Carregando dados...</div>
+        <div id="error" class="error" style="display: none;"></div>
+        <div id="report" class="report-section">
+            <div class="report-card">
+                <h2 onclick="toggleSection('orders')">Ordens de Produção Geradas</h2>
+                <div id="orders" class="report-content">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Número</th>
+                                <th>Produto</th>
+                                <th>Quantidade</th>
+                                <th>Nível</th>
+                                <th>Prioridade</th>
+                                <th>OP Pai</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTable"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="report-card">
+                <h2 onclick="toggleSection('needs')">Necessidades de Materiais</h2>
+                <div id="needs" class="report-content">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Tipo</th>
+                                <th>Necessário</th>
+                                <th>Disponível</th>
+                                <th>Falta</th>
+                            </tr>
+                        </thead>
+                        <tbody id="needsTable"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="report-card">
+                <h2 onclick="toggleSection('missing')">Materiais Faltantes</h2>
+                <div id="missing" class="report-content">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Tipo</th>
+                                <th>Quantidade Faltante</th>
+                            </tr>
+                        </thead>
+                        <tbody id="missingTable"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="report-card">
+                <h2 onclick="toggleSection('reserved')">Materiais Empenhados</h2>
+                <div id="reserved" class="report-content">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Quantidade Reservada</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reservedTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Configuração do Firebase
+        const firebaseConfig = {
+          apiKey: "AIzaSyD9IGE9oVTKE9kZTaMgmkN9ZmD02ekhos4",
+          authDomain: "naliteck.firebaseapp.com",
+          projectId: "naliteck",
+          storageBucket: "naliteck.appspot.com",
+          messagingSenderId: "866077066540",
+          appId: "1:866077066540:web:b797d4ffed60c30e675889"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Arrays para armazenar dados em memória
+        let produtos = [];
+        let estruturas = [];
+        let estoques = [];
+
+        // Carregar dados do Firestore ao iniciar
+        window.onload = async function() {
+            try {
+                await loadInitialData();
+                populateProductSelect();
+                document.getElementById('loading').style.display = 'none';
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = `Erro ao carregar dados: ${error.message}`;
+                console.error("Erro ao carregar dados:", error);
+            }
+        };
+
+        // Carregar dados do banco
+        async function loadInitialData() {
+            try {
+                const produtosSnapshot = await getDocs(collection(db, "produtos"));
+                const estruturasSnapshot = await getDocs(collection(db, "estruturas"));
+                const estoquesSnapshot = await getDocs(collection(db, "estoques"));
+
+                produtos = produtosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                estruturas = estruturasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                estoques = estoquesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                console.log("Produtos carregados:", produtos);
+                console.log("Estruturas carregadas:", estruturas);
+                console.log("Estoques carregados:", estoques);
+
+                if (produtos.length === 0) {
+                    throw new Error("Nenhum produto encontrado no banco de dados.");
+                }
+            } catch (error) {
+                console.error("Erro ao carregar dados:", error);
+                throw error;
+            }
+        }
+
+        // Preencher o select de produtos
+        function populateProductSelect() {
+            const productSelect = document.getElementById('productSelect');
+            productSelect.innerHTML = '<option value="">Selecione o produto...</option>';
+            
+            const produtosFiltrados = produtos.filter(produto => produto.tipo === 'PA' || produto.tipo === 'SP');
+            if (produtosFiltrados.length === 0) {
+                productSelect.innerHTML += '<option value="">Nenhum produto PA/SP disponível</option>';
+                return;
+            }
+
+            produtosFiltrados.forEach(produto => {
+                const option = document.createElement('option');
+                option.value = produto.id;
+                option.textContent = `${produto.codigo} - ${produto.descricao} (${produto.tipo})`;
+                productSelect.appendChild(option);
+            });
+        }
+
+        // Função para simular a OP
+        async function simulateOrder(productId, quantity, dueDate, priority = 'normal') {
+            const produto = produtos.find(p => p.id === productId);
+            if (!produto) return { error: `Produto com ID ${productId} não encontrado.` };
+
+            const estrutura = estruturas.find(e => e.produtoPaiId === productId);
+            if (!estrutura) return { error: `Estrutura não encontrada para ${produto.codigo}.` };
+
+            const report = {
+                ordensGeradas: [],
+                necessidadesMateriais: [],
+                materiaisFaltantes: [],
+                materiaisEmpenhados: []
+            };
+
+            const simulatedOrderNumber = generateOrderNumberSimulation();
+            const parentOp = {
+                numero: simulatedOrderNumber,
+                produtoId: productId,
+                quantidade: quantity,
+                dataEntrega: new Date(dueDate),
+                nivel: 0,
+                prioridade: priority
+            };
+
+            report.ordensGeradas.push({
+                numero: parentOp.numero,
+                produto: `${produto.codigo} - ${produto.descricao}`,
+                quantidade: `${quantity} ${produto.unidade}`,
+                nivel: 0,
+                prioridade: priority,
+                opPai: ''
+            });
+
+            await simulateExplodeComponents(parentOp, estrutura, 0, report);
+            return report;
+        }
+
+        // Função auxiliar para explosão de componentes
+        async function simulateExplodeComponents(parentOp, estrutura, level, report) {
+            for (const componente of estrutura.componentes) {
+                const produto = produtos.find(p => p.id === componente.componentId);
+                const quantidadeNecessaria = parentOp.quantidade * componente.quantidade;
+                const saldoDisponivel = checkInventory(componente.componentId);
+                const quantidadeReservada = Math.min(saldoDisponivel, quantidadeNecessaria);
+                const necessidade = Math.max(0, quantidadeNecessaria - quantidadeReservada);
+
+                report.necessidadesMateriais.push({
+                    produto: `${produto.codigo} - ${produto.descricao}`,
+                    tipo: produto.tipo,
+                    quantidadeNecessaria: `${quantidadeNecessaria} ${produto.unidade}`,
+                    saldoDisponivel: `${saldoDisponivel} ${produto.unidade}`,
+                    necessidade: `${necessidade} ${produto.unidade}`
+                });
+
+                if (quantidadeReservada > 0) {
+                    report.materiaisEmpenhados.push({
+                        produto: `${produto.codigo} - ${produto.descricao}`,
+                        quantidadeReservada: `${quantidadeReservada} ${produto.unidade}`
+                    });
+                }
+
+                if (necessidade > 0) {
+                    report.materiaisFaltantes.push({
+                        produto: `${produto.codigo} - ${produto.descricao}`,
+                        tipo: produto.tipo,
+                        quantidadeFaltante: `${necessidade} ${produto.unidade}`
+                    });
+                }
+
+                if (produto.tipo === 'SP' && necessidade > 0) {
+                    const simulatedOrderNumber = generateOrderNumberSimulation();
+                    const childOp = {
+                        numero: simulatedOrderNumber,
+                        produtoId: componente.componentId,
+                        quantidade: necessidade,
+                        nivel: level + 1,
+                        prioridade: parentOp.prioridade
+                    };
+
+                    report.ordensGeradas.push({
+                        numero: childOp.numero,
+                        produto: `${produto.codigo} - ${produto.descricao}`,
+                        quantidade: `${necessidade} ${produto.unidade}`,
+                        nivel: level + 1,
+                        prioridade: childOp.prioridade,
+                        opPai: parentOp.numero
+                    });
+
+                    const componenteEstrutura = estruturas.find(e => e.produtoPaiId === componente.componentId);
+                    if (componenteEstrutura) {
+                        await simulateExplodeComponents(childOp, componenteEstrutura, level + 1, report);
+                    }
+                }
+            }
+        }
+
+        // Simular número de ordem
+        function generateOrderNumberSimulation() {
+            const date = new Date();
+            const year = date.getFullYear().toString().substr(-2);
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const sequence = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+            return `OP${year}${month}${sequence}-SIM`;
+        }
+
+        // Verificar estoque disponível
+        function checkInventory(produtoId) {
+            const estoque = estoques.find(e => e.produtoId === produtoId);
+            const saldoTotal = estoque ? estoque.saldo : 0;
+            const saldoReservado = estoque ? (estoque.saldoReservado || 0) : 0;
+            return saldoTotal - saldoReservado;
+        }
+
+        // Executar simulação e exibir relatório
+        window.runOrderSimulation = async function() {
+            const productId = document.getElementById('productSelect').value;
+            const quantity = parseFloat(document.getElementById('quantity').value);
+            const dueDate = document.getElementById('dueDate').value;
+            const priority = document.getElementById('priority').value;
+
+            if (!productId || !quantity || !dueDate) {
+                alert('Preencha todos os campos obrigatórios.');
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            const report = await simulateOrder(productId, quantity, dueDate, priority);
+            document.getElementById('loading').style.display = 'none';
+
+            if (report.error) {
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = report.error;
+                return;
+            }
+
+            displayReport(report);
+        };
+
+        // Exibir relatório na tela
+        function displayReport(report) {
+            const reportSection = document.getElementById('report');
+            reportSection.classList.add('active');
+
+            // Ordens Geradas
+            const ordersTable = document.getElementById('ordersTable');
+            ordersTable.innerHTML = '';
+            report.ordensGeradas.forEach(op => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${op.numero}</td>
+                    <td>${op.produto}</td>
+                    <td>${op.quantidade}</td>
+                    <td>${op.nivel}</td>
+                    <td>${op.prioridade}</td>
+                    <td>${op.opPai || '-'}</td>
+                `;
+                ordersTable.appendChild(row);
+            });
+
+            // Necessidades de Materiais
+            const needsTable = document.getElementById('needsTable');
+            needsTable.innerHTML = '';
+            report.necessidadesMateriais.forEach(need => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${need.produto}</td>
+                    <td>${need.tipo}</td>
+                    <td>${need.quantidadeNecessaria}</td>
+                    <td>${need.saldoDisponivel}</td>
+                    <td>${need.necessidade}</td>
+                `;
+                needsTable.appendChild(row);
+            });
+
+            // Materiais Faltantes
+            const missingTable = document.getElementById('missingTable');
+            missingTable.innerHTML = '';
+            report.materiaisFaltantes.forEach(missing => {
+                const row = document.createElement('tr');
+                row.classList.add('highlight-missing');
+                row.innerHTML = `
+                    <td>${missing.produto}</td>
+                    <td>${missing.tipo}</td>
+                    <td>${missing.quantidadeFaltante}</td>
+                `;
+                missingTable.appendChild(row);
+            });
+
+            // Materiais Empenhados
+            const reservedTable = document.getElementById('reservedTable');
+            reservedTable.innerHTML = '';
+            report.materiaisEmpenhados.forEach(reserved => {
+                const row = document.createElement('tr');
+                row.classList.add('highlight-reserved');
+                row.innerHTML = `
+                    <td>${reserved.produto}</td>
+                    <td>${reserved.quantidadeReservada}</td>
+                `;
+                reservedTable.appendChild(row);
+            });
+
+            // Abrir todas as seções por padrão
+            document.querySelectorAll('.report-content').forEach(content => {
+                content.classList.toggle('active');
+            });
+        }
+
+        // Alternar visibilidade das seções
+        window.toggleSection = function(sectionId) {
+            const section = document.getElementById(sectionId);
+            section.classList.toggle('active');
+        };
+
+        // Expor funções necessárias globalmente
+        window.populateProductSelect = populateProductSelect;
+        window.toggleSection = toggleSection;
+    </script>
+</body>
+</html>

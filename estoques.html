@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Controle de Estoques</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --primary-color: #0854a0;
+      --primary-hover: #0a4d8c;
+      --secondary-color: #f0f3f6;
+      --border-color: #d4d4d4;
+      --text-color: #333;
+      --text-secondary: #666;
+      --success-color: #107e3e;
+      --success-hover: #0d6e36;
+      --danger-color: #bb0000;
+      --danger-hover: #a30000;
+      --warning-color: #e9730c;
+      --header-bg: #354a5f;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f7f7f7;
+      color: var(--text-color);
+    }
+
+    .container {
+      width: 90%;
+      max-width: 1200px;
+      margin: 50px auto;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+      background-color: var(--header-bg);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px 8px 0 0;
+      margin: -20px -20px 20px -20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      font-weight: 500;
+      margin: 0;
+    }
+
+    h2 {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 20px;
+      color: var(--primary-color);
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .search-bar {
+      margin-bottom: 20px;
+      padding: 20px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background-color: #fff;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .form-col {
+      flex: 1;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(8, 84, 160, 0.1);
+    }
+
+    textarea {
+      resize: vertical;
+    }
+
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-success {
+      background-color: var(--success-color);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background-color: var(--success-hover);
+    }
+
+    .btn-danger {
+      background-color: var(--danger-color);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background-color: var(--danger-hover);
+    }
+
+    .btn-secondary {
+      background-color: #6c757d;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background-color: #5a6268;
+    }
+
+    .stock-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    .stock-table th,
+    .stock-table td {
+      padding: 12px 15px;
+      border: 1px solid var(--border-color);
+      text-align: left;
+    }
+
+    .stock-table th {
+      background-color: var(--secondary-color);
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .stock-table tr:hover {
+      background-color: #f8f9fa;
+    }
+
+    .movement-type {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .type-entrada {
+      background-color: var(--success-color);
+      color: white;
+    }
+
+    .type-saida {
+      background-color: var(--danger-color);
+      color: white;
+    }
+
+    .close-button {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--text-secondary);
+    }
+
+    .tab-container {
+      margin-bottom: 30px;
+      padding: 20px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background-color: #fff;
+    }
+
+    .tab-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .tab-button {
+      padding: 8px 16px;
+      background-color: var(--secondary-color);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      cursor: pointer;
+      color: var(--text-color);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .tab-button.active {
+      background-color: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .import-export-container {
+      margin-bottom: 20px;
+      padding: 20px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background-color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .import-container, .export-container {
+      flex: 1;
+      padding: 10px;
+    }
+
+    .file-input-container {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+    }
+
+    .file-input-container input[type=file] {
+      position: absolute;
+      left: 0;
+      top: 0;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+    }
+
+    .file-input-button {
+      padding: 8px 16px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .file-input-button:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .export-button {
+      background-color: var(--success-color);
+    }
+
+    .export-button:hover {
+      background-color: var(--success-hover);
+    }
+
+    .status-message {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 4px;
+      display: none;
+      font-size: 14px;
+    }
+
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .stock-table td:nth-child(6),
+    .stock-table td:nth-child(7),
+    .stock-table td:nth-child(5),
+    .stock-table td:nth-child(8),
+    .stock-table td:nth-child(9) {
+      text-align: right;
+    }
+
+    .stock-table th:nth-child(6),
+    .stock-table th:nth-child(7),
+    .stock-table th:nth-child(5),
+    .stock-table th:nth-child(8),
+    .stock-table th:nth-child(9) {
+      text-align: right;
+    }
+
+    #futureStock[style*="color: red"] {
+      font-weight: bold;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background-color: #fff;
+      margin: 10% auto;
+      padding: 20px;
+      width: 80%;
+      max-width: 600px;
+      border-radius: 8px;
+      position: relative;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-body {
+      padding: 15px 5px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Controle de Estoques</h1>
+    <div>
+      <button class="btn-success type-entrada" onclick="openMovementModal('entrada')">Nova Entrada</button>
+      <button class="btn-danger type-saida" onclick="openMovementModal('saida')">Nova Saída</button>
+      <button class="btn-secondary" onclick="window.location.href='index.html'">Voltar</button>
+    </div>
+  </div>
+
+  <div class="import-export-container">
+    <div class="import-container">
+      <h2>Importar Estoques</h2>
+      <div class="file-input-container">
+        <button class="btn-primary file-input-button">Selecionar Arquivo Excel</button>
+        <input type="file" id="excelFileInput" accept=".xlsx, .xls" onchange="handleFileSelect(event)">
+      </div>
+      <div id="importStatus" class="status-message"></div>
+    </div>
+    <div class="export-container">
+      <h2>Exportar Estoques</h2>
+      <button class="btn-success export-button" onclick="exportToExcel()">Exportar para Excel</button>
+      <div id="exportStatus" class="status-message"></div>
+    </div>
+  </div>
+
+  <div class="search-bar">
+    <div class="form-row">
+      <div class="form-col">
+        <input type="text" id="searchInput" placeholder="Buscar por código ou descrição..." oninput="filterStock()">
+      </div>
+      <div class="form-col">
+        <select id="typeFilter" onchange="filterStock()">
+          <option value="">Todos os tipos</option>
+          <option value="MP">Matéria Prima</option>
+          <option value="SP">Semi-Produto</option>
+          <option value="PA">Produto Acabado</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-container">
+    <div class="tab-buttons">
+      <button class="tab-button active" onclick="switchTab('saldos')">Saldos</button>
+      <button class="tab-button" onclick="switchTab('movimentacoes')">Movimentações</button>
+    </div>
+
+    <div id="saldosTab" class="tab-content active">
+      <table class="stock-table">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Descrição</th>
+            <th>Tipo</th>
+            <th>Unidade</th>
+            <th>Armazém</th>
+            <th>Saldo</th>
+            <th>Custo Unitário</th>
+            <th>Valor Total</th>
+            <th>Última Movimentação</th>
+          </tr>
+        </thead>
+        <tbody id="stockTableBody"></tbody>
+      </table>
+    </div>
+
+    <div id="movimentacoesTab" class="tab-content">
+      <table class="stock-table">
+        <thead>
+          <tr>
+            <th>Data/Hora</th>
+            <th>Produto</th>
+            <th>Tipo</th>
+            <th>Quantidade</th>
+            <th>Custo Unitário</th>
+            <th>Documento</th>
+            <th>Observações</th>
+            <th>TES</th>
+          </tr>
+        </thead>
+        <tbody id="movementsTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="movementModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="modalTitle">Nova Movimentação</h2>
+      <span class="close-button" onclick="closeModal()">×</span>
+    </div>
+
+    <div class="modal-body">
+      <form id="movementForm" onsubmit="handleMovement(event)">
+        <input type="hidden" id="movementType">
+
+        <div class="form-group">
+          <label for="productSelect">Produto:</label>
+          <select id="productSelect" required onchange="updateCalculations()">
+            <option value="">Selecione o produto...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="movementUnit">Unidade:</label>
+          <select id="movementUnit" onchange="updateCalculations()">
+            <option value="principal">Unidade Principal</option>
+            <option value="secundaria">Unidade Secundária</option>
+          </select>
+        </div>
+        <div class="form-group">
+            <label for="warehouseOrigin">Armazém de Origem:</label>
+            <select id="warehouseOrigin" required>
+              <option value="">Selecione o armazém de origem...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="warehouseDestiny">Armazém de Destino:</label>
+            <select id="warehouseDestiny" required>
+              <option value="">Selecione o armazém de destino...</option>
+            </select>
+          </div>
+
+        <div class="form-row">
+          <div class="form-col">
+            <label for="quantity">Quantidade:</label>
+            <input type="number" id="quantity" min="0.001" step="0.001" required oninput="updateCalculations()">
+          </div>
+          <div class="form-col">
+            <label for="valorUnitario">Valor Unitário (R$):</label>
+            <input type="number" id="valorUnitario" min="0" step="0.01" required oninput="updateCalculations()">
+          </div>
+          <div class="form-col">
+            <label for="documentType">Tipo de Documento:</label>
+            <select id="documentType" required onchange="updateTESOptions()">
+              <option value="COMPRA">Nota Fiscal de Compra</option>
+              <option value="VENDA">Nota Fiscal de Venda</option>
+              <option value="PRODUCAO">Ordem de Produção</option>
+              <option value="CONSUMO">Requisição de Material</option>
+              <option value="AJUSTE">Ajuste de Inventário</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+            <label for="tes">TES - Tipo de Entrada/Saída:</label>
+            <select id="tes" required>
+              <option value="">Selecione o TES...</option>
+            </select>
+          </div>
+
+        <div class="form-group">
+          <label for="documentNumber">Número do Documento:</label>
+          <input type="text" id="documentNumber" required>
+        </div>
+
+        <div class="form-group">
+          <label for="observations">Observações:</label>
+          <textarea id="observations" rows="3"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-col">
+            <label>Estoque Atual:</label>
+            <div id="currentStock" style="padding: 8px; background-color: var(--secondary-color); border-radius: 4px;">-</div>
+          </div>
+          <div class="form-col">
+            <label>Saldo Futuro:</label>
+            <div id="futureStock" style="padding: 8px; background-color: var(--secondary-color); border-radius: 4px;">-</div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-col">
+            <label>Valor Total:</label>
+            <div id="totalValue" style="padding: 8px; background-color: var(--secondary-color); border-radius: 4px;">-</div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-success">Confirmar Movimentação</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { db } from './firebase-config.js';
+  import { 
+    collection, 
+    addDoc, 
+    onSnapshot,
+    doc,
+    updateDoc,
+    Timestamp,
+    getDoc
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  let produtos = [];
+  let estoques = [];
+  let movimentacoes = [];
+  let armazens = [];
+
+  window.onload = function() {
+    setupRealTimeListeners();
+  };
+
+  function setupRealTimeListeners() {
+    try {
+      onSnapshot(collection(db, "produtos"), (snapshot) => {
+        produtos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        updateProductSelect();
+      });
+
+      onSnapshot(collection(db, "estoques"), (snapshot) => {
+        estoques = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      });
+
+      onSnapshot(collection(db, "movimentacoesEstoque"), (snapshot) => {
+        movimentacoes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        loadMovements();
+      });
+
+      onSnapshot(collection(db, "armazens"), (snapshot) => {
+        armazens = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        loadStock(); 
+        updateWarehouseSelects();
+      });
+
+    } catch (error) {
+      console.error("Erro ao configurar listeners:", error);
+      alert("Erro ao carregar dados do Firestore: " + error.message);
+    }
+  }
+
+  function updateProductSelect() {
+    const select = document.getElementById('productSelect');
+    select.innerHTML = '<option value="">Selecione o produto...</option>';
+    produtos.forEach(produto => {
+      select.innerHTML += `
+        <option value="${produto.id}">
+          ${produto.codigo} - ${produto.descricao} (${produto.tipo})
+        </option>`;
+    });
+  }
+
+  async function loadStock() {
+    const tableBody = document.getElementById('stockTableBody');
+    tableBody.innerHTML = '';
+
+    for (const produto of produtos) {
+      const estoquesProduto = estoques.filter(e => e.produtoId === produto.id);
+      const custo = produto.custo || 0;
+      const ultimaMovimentacao = movimentacoes
+        .filter(m => m.produtoId === produto.id)
+        .sort((a, b) => b.dataHora.seconds - a.dataHora.seconds)[0];
+
+      if (estoquesProduto.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${produto.codigo}</td>
+          <td>${produto.descricao}</td>
+          <td>${produto.tipo}</td>
+          <td>${produto.unidade}</td>
+          <td>${armazens[0]?.codigo || 'Não definido'}</td>
+          <td>0.000 ${produto.unidade}</td>
+          <td>R$ ${(produto.custo || 0).toFixed(2)}</td>
+          <td>R$ 0.00</td>
+          <td>Sem movimentações</td>
+        `;
+        tableBody.appendChild(row);
+      } else {
+        estoquesProduto.forEach(estoque => {
+          const row = document.createElement('tr');
+          const armazemEncontrado = armazens.find(a => a.id === estoque.armazemId);
+          const armazem = armazemEncontrado ? armazemEncontrado.codigo : armazens[0]?.codigo || 'Não definido';
+
+          row.innerHTML = `
+          <td>${produto.codigo}</td>
+          <td>${produto.descricao}</td>
+          <td>${produto.tipo}</td>
+          <td>${produto.unidade}</td>
+          <td>${armazem}</td>
+          <td>${estoque.saldo.toFixed(3)} ${produto.unidade}</td>
+          <td>R$ ${custo.toFixed(2)}</td>
+          <td>R$ ${(estoque.saldo * custo).toFixed(2)}</td>
+          <td>${ultimaMovimentacao ? 
+            new Date(ultimaMovimentacao.dataHora.seconds * 1000).toLocaleString() : 
+            'Sem movimentações'}</td>
+        `;
+          tableBody.appendChild(row);
+        });
+      }
+    }
+  }
+
+  window.switchTab = function(tab) {
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    document.querySelectorAll('.tab-button').forEach(button => button.classList.remove('active'));
+    document.getElementById(`${tab}Tab`).classList.add('active');
+    document.querySelector(`button[onclick="switchTab('${tab}')"]`).classList.add('active');
+    if (tab === 'movimentacoes') loadMovements();
+  }
+
+  async function loadMovements() {
+    const tableBody = document.getElementById('movementsTableBody');
+    tableBody.innerHTML = '';
+
+    const sortedMovements = movimentacoes.sort((a, b) => b.dataHora.seconds - a.dataHora.seconds);
+
+    for (const mov of sortedMovements) {
+      const produto = produtos.find(p => p.id === mov.produtoId);
+      if (!produto) continue;
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${new Date(mov.dataHora.seconds * 1000).toLocaleString()}</td>
+        <td>${produto.codigo} - ${produto.descricao}</td>
+        <td><span class="movement-type type-${mov.tipo.toLowerCase()}">${mov.tipo}</span></td>
+        <td>${mov.quantidade.toFixed(3)} ${produto.unidade}</td>
+        <td>${mov.valorUnitario ? 'R$ ' + mov.valorUnitario.toFixed(2) : '-'}</td>
+        <td>${mov.tipoDocumento} ${mov.numeroDocumento}</td>
+        <td>${mov.observacoes || ''}</td>
+        <td>${mov.tes || ''}</td>
+      `;
+      tableBody.appendChild(row);
+    }
+  }
+
+  window.filterStock = function() {
+    const searchText = document.getElementById('searchInput').value.toLowerCase();
+    const typeFilter = document.getElementById('typeFilter').value;
+    const tableBody = document.getElementById('stockTableBody');
+    tableBody.innerHTML = '';
+
+    produtos.forEach(produto => {
+      const estoquesProduto = estoques.filter(e => e.produtoId === produto.id);
+
+      if ((produto.codigo.toLowerCase().includes(searchText) || 
+           produto.descricao.toLowerCase().includes(searchText)) &&
+          (!typeFilter || produto.tipo === typeFilter)) {
+
+        if (estoquesProduto.length === 0) {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${produto.codigo}</td>
+            <td>${produto.descricao}</td>
+            <td>${produto.tipo}</td>
+            <td>${produto.unidade}</td>
+            <td>${armazens[0]?.codigo || 'Não definido'}</td>
+            <td>0.000 ${produto.unidade}</td>
+            <td>R$ ${(produto.custo || 0).toFixed(2)}</td>
+            <td>R$ 0.00</td>
+            <td>Sem movimentações</td>
+          `;
+          tableBody.appendChild(row);
+        } else {
+          estoquesProduto.forEach(estoque => {
+            const row = document.createElement('tr');
+            const armazem = armazens.find(a => a.id === estoque.armazemId)?.codigo || 'Não definido';
+            const ultimaMovimentacao = movimentacoes
+              .filter(m => m.produtoId === produto.id)
+              .sort((a, b) => b.dataHora.seconds - a.dataHora.seconds)[0];
+
+            row.innerHTML = `
+              <td>${produto.codigo}</td>
+              <td>${produto.descricao}</td>
+              <td>${produto.tipo}</td>
+              <td>${produto.unidade}</td>
+              <td>${armazem}</td>
+              <td>${estoque.saldo.toFixed(3)} ${produto.unidade}</td>
+              <td>R$ ${(produto.custo || 0).toFixed(2)}</td>
+              <td>R$ ${(estoque.saldo * (produto.custo || 0)).toFixed(2)}</td>
+              <td>${ultimaMovimentacao ? 
+                new Date(ultimaMovimentacao.dataHora.seconds * 1000).toLocaleString() : 
+                'Sem movimentações'}</td>
+            `;
+            tableBody.appendChild(row);
+          });
+        }
+      }
+    });
+  }
+
+
+  window.openMovementModal = function(type) {
+    document.getElementById('movementType').value = type;
+    document.getElementById('modalTitle').textContent = 
+      type === 'entrada' ? 'Nova Entrada de Estoque' : 'Nova Saída de Estoque';
+
+    const docTypeSelect = document.getElementById('documentType');
+    docTypeSelect.innerHTML = type === 'entrada' ? `
+      <option value="COMPRA">Nota Fiscal de Compra</option>
+      <option value="PRODUCAO">Ordem de Produção</option>
+      <option value="AJUSTE">Ajuste de Inventário</option>
+    ` : `
+      <option value="VENDA">Nota Fiscal de Venda</option>
+      <option value="CONSUMO">Requisição de Material</option>
+      <option value="AJUSTE">Ajuste de Inventário</option>
+    `;
+
+    document.getElementById('currentStock').textContent = '-';
+    document.getElementById('futureStock').textContent = '-';
+    document.getElementById('totalValue').textContent = '-';
+
+    document.getElementById('movementModal').style.display = 'block';
+    updateTESOptions();
+  };
+
+  window.closeModal = function() {
+    document.getElementById('movementModal').style.display = 'none';
+    document.getElementById('movementForm').reset();
+  };
+
+  window.updateCalculations = function() {
+    const produtoId = document.getElementById('productSelect').value;
+    const type = document.getElementById('movementType').value;
+    const unitSelect = document.getElementById('movementUnit').value;
+    const quantidade = parseFloat(document.getElementById('quantity').value) || 0;
+    const valorUnitario = parseFloat(document.getElementById('valorUnitario').value) || 0;
+
+    if (!produtoId) return;
+
+    const produto = produtos.find(p => p.id === produtoId);
+    const estoque = estoques.find(e => e.produtoId === produtoId) || { saldo: 0 };
+    const fatorConversao = produto.fatorConversao || 1;
+
+    let quantidadeConvertida = quantidade;
+    if (unitSelect === 'secundaria' && produto.unidadeSecundaria) {
+      quantidadeConvertida = quantidade / fatorConversao;
+    }
+
+    const saldoFuturo = type === 'entrada' 
+      ? estoque.saldo + quantidadeConvertida 
+      : estoque.saldo - quantidadeConvertida;
+
+    document.getElementById('currentStock').textContent = `${estoque.saldo.toFixed(3)} ${produto.unidade}`;
+    document.getElementById('futureStock').textContent = `${saldoFuturo.toFixed(3)} ${produto.unidade}`;
+    document.getElementById('totalValue').textContent = `R$ ${(quantidade * valorUnitario).toFixed(2)}`;
+
+    document.getElementById('futureStock').style.color = (type === 'saida' && saldoFuturo < 0) ? 'red' : '';
+  };
+
+  window.updateTESOptions = function() {
+      const docType = document.getElementById('documentType').value;
+      const tesSelect = document.getElementById('tes');
+      tesSelect.innerHTML = '<option value="">Selecione o TES...</option>';
+
+      switch(docType) {
+        case 'COMPRA':
+          tesSelect.innerHTML += `
+            <option value="001">001 - Compra para estoque</option>
+            <option value="002">002 - Compra para consumo</option>
+            <option value="003">003 - Devolução de venda</option>
+            <option value="004">004 - Compra para industrialização</option>
+            <option value="005">005 - Compra por importação</option>
+            <option value="006">006 - Compra para revenda</option>`;
+          break;
+        case 'VENDA':
+          tesSelect.innerHTML += `
+            <option value="500">500 - Venda de produto</option>
+            <option value="501">501 - Remessa para beneficiamento</option>
+            <option value="502">502 - Devolução de compra</option>
+            <option value="503">503 - Venda para entrega futura</option>
+            <option value="504">504 - Remessa por conta e ordem</option>
+            <option value="505">505 - Remessa para demonstração</option>`;
+          break;
+        case 'PRODUCAO':
+          tesSelect.innerHTML += `
+            <option value="200">200 - Entrada por produção</option>
+            <option value="201">201 - Consumo de componentes</option>
+            <option value="202">202 - Baixa por perda</option>
+            <option value="203">203 - Baixa por refugo</option>
+            <option value="204">204 - Entrada por retrabalho</option>
+            <option value="205">205 - Consumo por industrialização</option>`;
+          break;
+        case 'CONSUMO':
+          tesSelect.innerHTML += `
+            <option value="400">400 - Requisição para consumo</option>
+            <option value="401">401 - Requisição para manutenção</option>
+            <option value="402">402 - Requisição para projeto</option>
+            <option value="403">403 - Consumo por amostra</option>
+            <option value="404">404 - Requisição para marketing</option>
+            <option value="405">405 - Requisição para P&D</option>`;
+          break;
+        case 'AJUSTE':
+          tesSelect.innerHTML += `
+            <option value="900">900 - Ajuste de inventário entrada</option>
+            <option value="901">901 - Ajuste de inventário saída</option>
+            <option value="902">902 - Ajuste por divergência</option>
+            <option value="903>903 - Ajuste por avaria</option>
+            <option value="904">904 - Ajuste por validade</option>
+            <option value="905">905 - Ajuste por qualidade</option>`;
+          break;
+      }
+    }
+
+    window.updateUnitPrice = function() {
+
+    }
+
+  window.handleMovement = async function(event) {
+    event.preventDefault();
+
+    // Verificar parâmetros do sistema
+    const parametrosDoc = await getDoc(doc(db, "parametros", "sistema"));
+    const params = parametrosDoc.exists() ? parametrosDoc.data() : {};
+
+    const armazemDestino = document.getElementById('warehouseDestiny')?.value;
+    const armazemOrigem = document.getElementById('warehouseOrigin')?.value;
+
+    if (params.controleQualidadeObrigatorio) {
+      const isQualityMovement = armazemDestino?.includes('QUALIDADE') || armazemOrigem?.includes('QUALIDADE');
+      if (!isQualityMovement && params.controleQualidadeObrigatorio) {
+        alert('Movimentação requer inspeção de qualidade conforme parâmetros do sistema.');
+        return;
+      }
+    }
+
+    const type = document.getElementById('movementType').value;
+    const produtoId = document.getElementById('productSelect').value;
+    const unitSelect = document.getElementById('movementUnit').value;
+    const quantidade = parseFloat(document.getElementById('quantity').value);
+    const valorUnitario = parseFloat(document.getElementById('valorUnitario').value);
+    const tipoDocumento = document.getElementById('documentType').value;
+    const numeroDocumento = document.getElementById('documentNumber').value;
+    const observacoes = document.getElementById('observations').value;
+    const tes = document.getElementById('tes').value;
+
+
+    const produto = produtos.find(p => p.id === produtoId);
+    let quantidadeConvertida = quantidade;
+    if (unitSelect === 'secundaria' && produto.unidadeSecundaria) {
+      quantidadeConvertida = quantidade / produto.fatorConversao;
+    }
+
+    try {
+      const movimentacao = {
+        produtoId,
+        tipo: type === 'entrada' ? 'ENTRADA' : 'SAIDA',
+        quantidade: quantidadeConvertida,
+        unidade: produto.unidade,
+        quantidadeOriginal: quantidade,
+        unidadeOriginal: unitSelect === 'principal' ? produto.unidade : produto.unidadeSecundaria,
+        valorUnitario,
+        tipoDocumento,
+        numeroDocumento,
+        observacoes,
+        dataHora: Timestamp.now(),
+        tes,
+        armazemOrigem,
+        armazemDestino
+      };
+
+      const estoque = estoques.find(e => e.produtoId === produtoId);
+      const novoSaldo = type === 'entrada' 
+        ? (estoque?.saldo || 0) + quantidadeConvertida 
+        : (estoque?.saldo || 0) - quantidadeConvertida;
+
+      if (type === 'saida' && novoSaldo < 0) {
+        alert('Saldo insuficiente para realizar esta saída!');
+        return;
+      }
+
+      await addDoc(collection(db, "movimentacoesEstoque"), movimentacao);
+
+      if (estoque) {
+        await updateDoc(doc(db, "estoques", estoque.id), {
+          saldo: novoSaldo,
+          ultimaMovimentacao: Timestamp.now()
+        });
+      } else {
+        await addDoc(collection(db, "estoques"), {
+          produtoId,
+          saldo: novoSaldo,
+          ultimaMovimentacao: Timestamp.now()
+        });
+      }
+
+      alert('Movimentação registrada com sucesso!');
+      closeModal();
+    } catch (error) {
+      console.error("Erro ao registrar movimentação:", error);
+      alert("Erro ao registrar movimentação: " + error.message);
+    }
+  };
+
+  window.handleFileSelect = async function(event) {
+    const file = event.target.files[0];
+    const importStatus = document.getElementById('importStatus');
+
+    if (!file) return;
+
+    try {
+      importStatus.textContent = "Processando arquivo...";
+      importStatus.className = "status-message";
+      importStatus.style.display = "block";
+
+      const data = await readExcelFile(file);
+
+      if (!data || !data.length) throw new Error("Arquivo vazio ou formato inválido");
+
+      const headers = Object.keys(data[0]).map(h => h.toLowerCase());
+      if (!headers.includes('código') || !headers.includes('saldo')) {
+        throw new Error("O arquivo deve conter as colunas 'Código' e 'Saldo'");
+      }
+
+      let atualizados = 0, erros = 0, detalhesErros = [];
+      for (const [index, row] of data.entries()) {
+        try {
+          const codigo = row.código || row.Código || row.CODIGO;
+          let saldo = row.saldo || row.Saldo || row.SALDO;
+
+          if (!codigo) throw new Error("Código não especificado");
+          if (typeof saldo === 'string') saldo = parseFloat(saldo.replace(/\./g, '').replace(',', '.'));
+          if (isNaN(saldo)) throw new Error(`Saldo inválido: ${row.saldo}`);
+
+          const produto = produtos.find(p => p.codigo === codigo);
+          if (!produto) throw new Error(`Produto não encontrado no sistema`);
+
+          const estoque = estoques.find(e => e.produtoId === produto.id);
+          if (estoque) {
+            await updateDoc(doc(db, "estoques", estoque.id), {
+              saldo,
+              ultimaMovimentacao: Timestamp.now()
+            });
+            const diferenca = saldo - estoque.saldo;
+            if (diferenca !== 0) {
+              await addDoc(collection(db, "movimentacoesEstoque"), {
+                produtoId: produto.id,
+                tipo: diferenca > 0 ? 'ENTRADA' : 'SAIDA',
+                quantidade: Math.abs(diferenca),
+                tipoDocumento: 'AJUSTE',
+                numeroDocumento: 'IMPORTACAO',
+                observacoes: 'Ajuste por importação de planilha',
+                dataHora: Timestamp.now()
+              });
+            }
+            atualizados++;
+          } else {
+            await addDoc(collection(db, "estoques"), {
+                            produtoId: produto.id,
+              saldo,
+              ultimaMovimentacao: Timestamp.now()
+            });
+            await addDoc(collection(db, "movimentacoesEstoque"), {
+              produtoId: produto.id,
+              tipo: 'ENTRADA',
+              quantidade: saldo,
+              tipoDocumento: 'AJUSTE',
+              numeroDocumento: 'IMPORTACAO',
+              observacoes: 'Entrada inicial por importação de planilha',
+              dataHora: Timestamp.now()
+            });
+            atualizados++;
+          }
+        } catch (rowError) {
+          erros++;
+          detalhesErros.push(`Linha ${index + 2}: ${rowError.message}`);
+        }
+      }
+
+      importStatus.innerHTML = `Importação concluída!<br>Atualizados: ${atualizados}<br>Erros: ${erros}` + 
+        (erros > 0 ? `<br><br>Detalhes dos erros:<br>${detalhesErros.join('<br>')}` : '');
+      importStatus.className = erros > 0 ? "status-message error" : "status-message success";
+    } catch (error) {
+      importStatus.textContent = `Erro na importação: ${error.message}`;
+      importStatus.className = "status-message error";
+    }
+    event.target.value = '';
+  };
+
+  async function readExcelFile(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const data = e.target.result;
+          const workbook = XLSX.read(data, { type: 'binary' });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(worksheet);
+          resolve(json);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      reader.onerror = reject;
+      reader.readAsBinaryString(file);
+    });
+  }
+
+  window.exportToExcel = async function() {
+    const exportStatus = document.getElementById('exportStatus');
+    try {
+      exportStatus.textContent = "Preparando exportação...";
+      exportStatus.className = "status-message";
+      exportStatus.style.display = "block";
+
+      const stockData = produtos.map(produto => {
+        const estoque = estoques.find(e => e.produtoId === produto.id) || { saldo: 0 };
+        return { 'Código': produto.codigo, 'Saldo': estoque.saldo };
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(stockData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Estoques");
+
+      worksheet['!cols'] = [{ wch: 15 }, { wch: 15 }];
+      const range = XLSX.utils.decode_range(worksheet['!ref']);
+      for (let row = range.s.r + 1; row <= range.e.r; row++) {
+        const cellAddress = XLSX.utils.encode_cell({r: row, c: 1});
+        if (worksheet[cellAddress]) {
+          worksheet[cellAddress].t = 'n';
+          worksheet[cellAddress].z = '0.000';
+        }
+      }
+
+      const fileName = `Estoques_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+
+      exportStatus.textContent = "Exportação concluída com sucesso!";
+      exportStatus.className = "status-message success";
+      setTimeout(() => exportStatus.style.display = "none", 3000);
+    } catch (error) {
+      exportStatus.textContent = `Erro na exportação: ${error.message}`;
+      exportStatus.className = "status-message error";
+    }
+  };
+
+  function updateWarehouseSelects() {
+    const warehouseOriginSelect = document.getElementById('warehouseOrigin');
+    const warehouseDestinySelect = document.getElementById('warehouseDestiny');
+    warehouseOriginSelect.innerHTML = '<option value="">Selecione o armazém de origem...</option>';
+    warehouseDestinySelect.innerHTML = '<option value="">Selecione o armazém de destino...</option>';
+    armazens.forEach(armazem => {
+      warehouseOriginSelect.innerHTML += `<option value="${armazem.id}">${armazem.codigo}</option>`;
+      warehouseDestinySelect.innerHTML += `<option value="${armazem.id}">${armazem.codigo}</option>`;
+    });
+  }
+
+  window.onclick = function(event) {
+    const modal = document.getElementById('movementModal');
+    if (event.target === modal) {
+      closeModal();
+    }
+  };
+</script>
+</body>
+</html>

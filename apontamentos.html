@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Histórico de Apontamentos de Produção</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #0854a0;
+      --primary-hover: #0a4d8c;
+      --secondary-color: #f0f3f6;
+      --border-color: #d4d4d4;
+      --text-color: #333;
+      --text-secondary: #666;
+      --success-color: #107e3e;
+      --success-hover: #0d6e36;
+      --danger-color: #bb0000;
+      --danger-hover: #a30000;
+      --warning-color: #e9730c;
+      --header-bg: #354a5f;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f7f7f7;
+      color: var(--text-color);
+    }
+
+    .container {
+      width: 90%;
+      max-width: 1200px;
+      margin: 50px auto;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+      background-color: var(--header-bg);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px 8px 0 0;
+      margin: -20px -20px 20px -20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      font-weight: 500;
+      margin: 0;
+    }
+
+    .form-container {
+      margin-bottom: 30px;
+      padding: 20px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background-color: #fff;
+    }
+
+    .form-title {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 20px;
+      color: var(--primary-color);
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .form-row {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .form-col {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(8, 84, 160, 0.1);
+    }
+
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+
+    .btn-success {
+      background-color: var(--success-color);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background-color: var(--success-hover);
+    }
+
+    .btn-danger {
+      background-color: var(--danger-color);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background-color: var(--danger-hover);
+    }
+
+    .btn-secondary {
+      background-color: #6c757d;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background-color: #5a6268;
+    }
+
+    .orders-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    .orders-table th,
+    .orders-table td {
+      padding: 12px 15px;
+      border: 1px solid var(--border-color);
+      text-align: left;
+    }
+
+    .orders-table th {
+      background-color: var(--secondary-color);
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    .orders-table th:hover {
+      background-color: #e0e0e0;
+    }
+
+    .orders-table tr:hover {
+      background-color: #f8f9fa;
+    }
+
+    .status-badge {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      display: inline-block;
+    }
+
+    .status-pendente { background-color: #ffc107; color: #000; }
+    .status-em-producao { background-color: #17a2b8; color: #fff; }
+    .status-concluida { background-color: var(--success-color); color: #fff; }
+    .status-cancelada { background-color: var(--danger-color); color: #fff; }
+
+    .sort-indicator {
+      margin-left: 5px;
+      font-size: 12px;
+    }
+
+    @media (max-width: 768px) {
+      .form-row {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .orders-table {
+        font-size: 12px;
+      }
+      .orders-table th, .orders-table td {
+        padding: 8px 10px;
+      }
+      .container {
+        margin: 20px auto;
+        padding: 15px;
+      }
+      .header h1 {
+        font-size: 20px;
+      }
+      button {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+      .form-container {
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Histórico de Apontamentos de Produção</h1>
+      <div>
+        <button class="btn-primary" onclick="refreshData()"><i class="fas fa-sync-alt"></i> Atualizar Dados</button>
+        <button class="btn-success" onclick="exportToPDF()"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
+        <button class="btn-secondary" onclick="window.location.href='index.html'"><i class="fas fa-arrow-left"></i> Voltar</button>
+      </div>
+    </div>
+
+    <div class="form-container">
+      <h2 class="form-title">Filtros</h2>
+      <div class="form-row">
+        <div class="form-col">
+          <label for="searchInput">Buscar:</label>
+          <input type="text" id="searchInput" placeholder="Número da ordem ou produto...">
+        </div>
+        <div class="form-col">
+          <label for="statusFilter">Status:</label>
+          <select id="statusFilter">
+            <option value="">Todos os status</option>
+            <option value="Pendente">Pendente</option>
+            <option value="Em Produção">Em Produção</option>
+            <option value="Concluída">Concluída</option>
+            <option value="Cancelada">Cancelada</option>
+          </select>
+        </div>
+        <div class="form-col">
+          <label for="centroCustoFilter">Centro de Custo:</label>
+          <select id="centroCustoFilter">
+            <option value="">Todos</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-col">
+          <label for="startDate">Data Início:</label>
+          <input type="date" id="startDate">
+        </div>
+        <div class="form-col">
+          <label for="endDate">Data Fim:</label>
+          <input type="date" id="endDate">
+        </div>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <h2 class="form-title">Apontamentos Registrados</h2>
+      <table class="orders-table">
+        <thead>
+          <tr>
+            <th onclick="sortTable(0)">Ordem <span id="sortOrdem" class="sort-indicator"></span></th>
+            <th onclick="sortTable(1)">Produto <span id="sortProduto" class="sort-indicator"></span></th>
+            <th onclick="sortTable(2)">Quantidade <span id="sortQuantidade" class="sort-indicator"></span></th>
+            <th onclick="sortTable(3)">Refugo <span id="sortRefugo" class="sort-indicator"></span></th>
+            <th onclick="sortTable(4)">Data <span id="sortData" class="sort-indicator"></span></th>
+            <th onclick="sortTable(5)">Centro de Custo <span id="sortCentroCusto" class="sort-indicator"></span></th>
+            <th>Observações</th>
+          </tr>
+        </thead>
+        <tbody id="appointmentsTableBody">
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script type="module">
+    import { db } from './firebase-config.js';
+    import { 
+      collection, 
+      getDocs,
+      doc,
+      getDoc,
+      query,
+      limit,
+      orderBy
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    let produtos = [];
+    let ordensProducao = [];
+    let centrosCusto = [];
+    let sortColumn = 4;
+    let sortDirection = 'asc';
+    const CACHE_KEY = 'apontamentos_cache';
+    const CACHE_DURATION = 60 * 60 * 1000; // 1 hora em milissegundos
+
+    window.onload = async function() {
+      if (!localStorage.getItem('currentUser')) {
+        window.location.href = 'login.html';
+        return;
+      }
+      await loadCachedData();
+      document.getElementById('searchInput').addEventListener('input', filterAppointments);
+      document.getElementById('statusFilter').addEventListener('change', filterAppointments);
+      document.getElementById('centroCustoFilter').addEventListener('change', filterAppointments);
+      document.getElementById('startDate').addEventListener('change', filterAppointments);
+      document.getElementById('endDate').addEventListener('change', filterAppointments);
+    };
+
+    async function loadCachedData() {
+      const cache = JSON.parse(localStorage.getItem(CACHE_KEY));
+      const now = new Date().getTime();
+
+      if (cache && (now - cache.timestamp < CACHE_DURATION)) {
+        produtos = cache.produtos;
+        ordensProducao = cache.ordensProducao;
+        centrosCusto = cache.centrosCusto;
+        loadAppointments();
+      } else {
+        await fetchData();
+      }
+    }
+
+    async function fetchData() {
+      try {
+        // Carregar ordensProducao com limite
+        const ordensQuery = query(
+          collection(db, "ordensProducao"),
+          orderBy("ultimoApontamento.data", "desc"),
+          limit(20)
+        );
+        const ordensSnapshot = await getDocs(ordensQuery);
+        ordensProducao = ordensSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // Identificar IDs únicos de produtos e centros de custo
+        const produtoIds = new Set(ordensProducao.map(op => op.produtoId).filter(id => id));
+        const centroCustoIds = new Set(ordensProducao.map(op => op.centroCustoId).filter(id => id));
+
+        // Carregar apenas produtos referenciados
+        produtos = [];
+        for (const id of produtoIds) {
+          const docSnap = await getDoc(doc(db, "produtos", id));
+          if (docSnap.exists()) {
+            produtos.push({ id: docSnap.id, ...docSnap.data() });
+          }
+        }
+
+        // Carregar apenas centros de custo referenciados
+        centrosCusto = [];
+        for (const id of centroCustoIds) {
+          const docSnap = await getDoc(doc(db, "centrosCusto", id));
+          if (docSnap.exists()) {
+            centrosCusto.push({ id: docSnap.id, ...docSnap.data() });
+          }
+        }
+
+        // Armazenar no cache
+        const cache = {
+          produtos,
+          ordensProducao,
+          centrosCusto,
+          timestamp: new Date().getTime()
+        };
+        localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+
+        loadAppointments();
+      } catch (error) {
+        console.error("Erro ao carregar dados:", error);
+        alert("Erro ao carregar dados. Por favor, tente novamente.");
+      }
+    }
+
+    window.refreshData = async function() {
+      localStorage.removeItem(CACHE_KEY);
+      await fetchData();
+    };
+
+    function setupCentroCustoFilter() {
+      const select = document.getElementById('centroCustoFilter');
+      select.innerHTML = '<option value="">Todos</option>';
+      centrosCusto.forEach(cc => {
+        select.innerHTML += `<option value="${cc.id}">${cc.codigo} - ${cc.descricao}</option>`;
+      });
+    }
+
+    async function loadAppointments() {
+      const tableBody = document.getElementById('appointmentsTableBody');
+      tableBody.innerHTML = '';
+
+      const appointments = [];
+      ordensProducao.forEach(op => {
+        if (op.ultimoApontamento) {
+          const produto = produtos.find(p => p.id === op.produtoId);
+          if (produto) {
+            appointments.push({
+              ordem: op.numero,
+              produto: `${produto.codigo} - ${produto.descricao}`,
+              quantidade: op.ultimoApontamento.quantidade,
+              quantidadeSecundaria: produto.unidadeSecundaria ? op.ultimoApontamento.quantidade * (produto.fatorConversao || 1) : null,
+              unidade: produto.unidade,
+              unidadeSecundaria: produto.unidadeSecundaria,
+              refugo: op.ultimoApontamento.refugo || 0,
+              data: new Date(op.ultimoApontamento.data.seconds * 1000),
+              centroCusto: op.centroCustoId ? centrosCusto.find(cc => cc.id === op.centroCustoId)?.codigo || '' : '',
+              observacoes: op.ultimoApontamento.observacoes || '',
+              status: op.status
+            });
+          }
+        }
+      });
+
+      appointments.sort((a, b) => {
+        let valueA, valueB;
+        switch (sortColumn) {
+          case 0: valueA = a.ordem; valueB = b.ordem; break;
+          case 1: valueA = a.produto; valueB = b.produto; break;
+          case 2: valueA = a.quantidade; valueB = b.quantidade; break;
+          case 3: valueA = a.refugo; valueB = b.refugo; break;
+          case 4: valueA = a.data.getTime(); valueB = b.data.getTime; break;
+          case 5: valueA = a.centroCusto; valueB = b.centroCusto; break;
+          default: valueA = a.data.getTime(); valueB = b.data.getTime();
+        }
+        if (typeof valueA === 'string') {
+          return sortDirection === 'asc' ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+        }
+        return sortDirection === 'asc' ? valueA - valueB : valueB - valueA;
+      });
+
+      appointments.forEach(appointment => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${appointment.ordem}</td>
+          <td>${appointment.produto}</td>
+          <td>
+            ${appointment.quantidade} ${appointment.unidade}
+            ${appointment.unidadeSecundaria ? `<br>(${appointment.quantidadeSecundaria} ${appointment.unidadeSecundaria})` : ''}
+          </td>
+          <td>${appointment.refugo} ${appointment.unidade}</td>
+          <td>${appointment.data.toLocaleDateString()}</td>
+          <td>${appointment.centroCusto}</td>
+          <td>${appointment.observacoes}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+
+      setupCentroCustoFilter();
+      updateSortIndicators(sortColumn);
+      filterAppointments();
+    }
+
+    function updateSortIndicators(column) {
+      const indicators = ['sortOrdem', 'sortProduto', 'sortQuantidade', 'sortRefugo', 'sortData', 'sortCentroCusto'];
+      indicators.forEach(id => document.getElementById(id).innerHTML = '');
+      const indicatorId = indicators[column];
+      if (indicatorId) {
+        document.getElementById(indicatorId).innerHTML = sortDirection === 'asc' ? '▲' : '▼';
+      }
+    }
+
+    window.filterAppointments = function() {
+      const searchText = document.getElementById('searchInput').value.toLowerCase();
+      const statusFilter = document.getElementById('statusFilter').value;
+      const centroCustoFilter = document.getElementById('centroCustoFilter').value;
+      const startDate = document.getElementById('startDate').value ? new Date(document.getElementById('startDate').value) : null;
+      const endDate = document.getElementById('endDate').value ? new Date(document.getElementById('endDate').value) : null;
+
+      const rows = document.getElementById('appointmentsTableBody').getElementsByTagName('tr');
+
+      for (const row of rows) {
+        const ordem = row.cells[0].textContent.toLowerCase();
+        const produto = row.cells[1].textContent.toLowerCase();
+        const status = ordensProducao.find(op => op.numero === row.cells[0].textContent)?.status || '';
+        const centroCusto = row.cells[5].textContent;
+        const data = new Date(row.cells[4].textContent.split('/').reverse().join('-'));
+
+        const matchesSearch = ordem.includes(searchText) || produto.includes(searchText);
+        const matchesStatus = !statusFilter || status === statusFilter;
+        const matchesCentroCusto = !centroCustoFilter || centrosCusto.find(cc => cc.codigo === centroCusto)?.id === centroCustoFilter;
+        const matchesDate = (!startDate || data >= startDate) && (!endDate || data <= new Date(endDate.setHours(23, 59, 59)));
+
+        row.style.display = matchesSearch && matchesStatus && matchesCentroCusto && matchesDate ? '' : 'none';
+      }
+    };
+
+    window.sortTable = function(column) {
+      if (sortColumn === column) {
+        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortColumn = column;
+        sortDirection = 'asc';
+      }
+      loadAppointments();
+    };
+
+    window.exportToPDF = function() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(12);
+
+      doc.text('Histórico de Apontamentos de Produção', 20, 20);
+
+      const headers = ['Ordem', 'Produto', 'Quantidade', 'Refugo', 'Data', 'Centro de Custo', 'Observações'];
+      const data = [];
+      const rows = document.getElementById('appointmentsTableBody').getElementsByTagName('tr');
+
+      for (const row of rows) {
+        if (row.style.display !== 'none') {
+          const cells = row.cells;
+          data.push([
+            cells[0].textContent,
+            cells[1].textContent,
+            cells[2].textContent.replace(/\n/g, ' '),
+            cells[3].textContent,
+            cells[4].textContent,
+            cells[5].textContent,
+            cells[6].textContent
+          ]);
+        }
+      }
+
+      doc.autoTable({
+        head: [headers],
+        body: data,
+        startY: 30,
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [53, 74, 95], textColor: [255, 255, 255] },
+        alternateRowStyles: { fillColor: [248, 249, 250] }
+      });
+
+      doc.save('relatorio_apontamentos.pdf');
+    };
+  </script>
+</body>
+</html>

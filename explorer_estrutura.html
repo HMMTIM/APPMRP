@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastro de Estrutura de Produtos - Estilo Explorer</title>
+  <style>
+    :root {
+      --primary-color: #0854a0;
+      --primary-hover: #0a4d8c;
+      --secondary-color: #f0f3f6;
+      --border-color: #d4d4d4;
+      --text-color: #333;
+      --text-secondary: #666;
+      --success-color: #107e3e;
+      --success-hover: #0d6e36;
+      --danger-color: #bb0000;
+      --danger-hover: #a30000;
+      --warning-color: #e9730c;
+      --header-bg: #f5f5f5;
+      --component-bg: #e8f4fd;
+      --highlight-color: #ffeb3b;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f7f7f7;
+      color: var(--text-color);
+    }
+    
+    .container {
+      width: 95%;
+      max-width: 1400px;
+      margin: 20px auto;
+      padding: 0;
+      background-color: #fff;
+      border-radius: 4px;
+      box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    
+    .page-header {
+      background-color: var(--header-bg);
+      padding: 15px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    h1 {
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--primary-color);
+      margin: 0;
+    }
+    
+    .header-actions {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+    
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+    
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: #fff;
+    }
+    
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+    
+    .btn-success {
+      background-color: var(--success-color);
+      color: #fff;
+    }
+    
+    .btn-success:hover {
+      background-color: var(--success-hover);
+    }
+    
+    .btn-danger {
+      background-color: var(--danger-color);
+      color: #fff;
+    }
+    
+    .btn-danger:hover {
+      background-color: var(--danger-hover);
+    }
+    
+    .btn-secondary {
+      background-color: #6c757d;
+      color: #fff;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #5a6268;
+    }
+    
+    .workspace {
+      display: flex;
+      height: calc(100vh - 120px);
+      min-height: 600px;
+    }
+    
+    .panel {
+      padding: 15px;
+      overflow: auto;
+    }
+    
+    .panel-header {
+      padding: 10px;
+      background-color: var(--secondary-color);
+      border-radius: 4px;
+      margin-bottom: 10px;
+      font-weight: 500;
+      font-size: 16px;
+      color: var(--primary-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .search-bar {
+      padding: 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      margin-bottom: 10px;
+      position: relative;
+    }
+    
+    .search-bar input {
+      width: 100%;
+      padding: 8px 30px 8px 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 3px;
+    }
+    
+    .search-icon {
+      position: absolute;
+      right: 20px;
+      top: 18px;
+      color: var(--text-secondary);
+    }
+    
+    /* Painel esquerdo - Produtos */
+    .products-panel {
+      width: 280px;
+      border-right: 1px solid var(--border-color);
+    }
+    
+    .categories-list {
+      margin-bottom: 10px;
+    }
+    
+    .category-item {
+      padding: 8px 10px;
+      cursor: pointer;
+      border-radius: 3px;
+      margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .category-item:hover {
+      background-color: #f0f0f0;
+    }
+    
+    .category-item.active {
+      background-color: var(--secondary-color);
+      font-weight: 500;
+    }
+    
+    .category-icon {
+      margin-right: 8px;
+      color: var(--primary-color);
+    }
+    
+    .products-list {
+      margin-top: 15px;
+    }
+    
+    .product-item {
+      padding: 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      margin-bottom: 8px;
+      cursor: grab;
+      background-color: white;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    
+    .product-item:hover {
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .product-item.dragging {
+      opacity: 0.5;
+      transform: scale(0.98);
+    }
+    
+    .product-title {
+      font-weight: 500;
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+    
+    .product-code {
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+    
+    .product-type {
+      display: inline-block;
+      padding: 2px 6px;
+      background-color: #e6e6e6;
+      border-radius: 3px;
+      font-size: 11px;
+      margin-left: 5px;
+    }
+    
+    /* Painel central - Estrutura */
+    .structure-panel {
+      flex: 1;
+      border-right: 1px solid var(--border-color);
+      position: relative;
+    }
+    
+    .structure-container {
+      height: calc(100% - 50px);
+      position: relative;
+      border: 1px dashed var(--border-color);
+      border-radius: 5px;
+      overflow: auto;
+      padding: 20px;
+    }
+    
+    .main-product {
+      width: 220px;
+      padding: 15px;
+      background-color: var(--component-bg);
+      border: 2px solid var(--primary-color);
+      border-radius: 5px;
+      position: absolute;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .main-product-title {
+      font-weight: 500;
+      font-size: 16px;
+      margin-bottom: 5px;
+      color: var(--primary-color);
+    }
+    
+    .main-product-code {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    
+    .component-item {
+      width: 200px;
+      padding: 10px;
+      background-color: white;
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+      position: absolute;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      cursor: move;
+      transition: box-shadow 0.2s;
+    }
+    
+    .component-item:hover {
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .component-title {
+      font-weight: 500;
+      margin-bottom: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .component-details {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    
+    .component-quantity {
+      display: flex;
+      align-items: center;
+      margin-top: 5px;
+    }
+    
+    .component-quantity input {
+      width: 60px;
+      text-align: right;
+      padding: 3px 5px;
+      margin-right: 5px;
+    }
+    
+    .component-actions {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      display: flex;
+      gap: 5px;
+    }
+    
+    .component-action-btn {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      background-color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .delete-btn {
+      color: var(--danger-color);
+    }
+    
+    .delete-btn:hover {
+      background-color: var(--danger-color);
+      color: white;
+    }
+    
+    .component-connector {
+      position: absolute;
+      background-color: var(--border-color);
+      z-index: -1;
+    }
+    
+    .dropzone {
+      border: 2px dashed rgba(8, 84, 160, 0.3);
+      background-color: rgba(8, 84, 160, 0.05);
+      border-radius: 5px;
+    }
+    
+    /* Painel direito - Detalhes */
+    .details-panel {
+      width: 300px;
+    }
+    
+    .operations-container {
+      margin-top: 15px;
+    }
+    
+    .operation-item {
+      padding: 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+    
+    .operation-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    
+    .operation-sequence {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      background-color: var(--primary-color);
+      color: white;
+      text-align: center;
+      line-height: 24px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+    
+    .operation-title {
+      font-weight: 500;
+    }
+    
+    .operation-detail {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 3px;
+    }
+    
+    .operation-actions {
+      display: flex;
+      gap: 5px;
+      margin-top: 10px;
+    }
+    
+    .operation-btn {
+      padding: 3px 8px;
+      font-size: 12px;
+    }
+    
+    .add-operation-btn {
+      width: 100%;
+      margin-bottom: 15px;
+    }
+    
+    /* Modal de Operação */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+    
+    .modal-content {
+      background-color: white;
+      margin: 10% auto;
+      padding: 20px;
+      border-radius: 5px;
+      width: 500px;
+      max-width: 90%;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .modal-title {
+      font-size: 18px;
+      color: var(--primary-color);
+    }
+    
+    .close-modal {
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--text-secondary);
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-label {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 5px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    
+    .form-control {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 3px;
+      font-size: 14px;
+    }
+    
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    /* Adicionais */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+    
+    .hover-highlight {
+      box-shadow: 0 0 0 2px var(--highlight-color) !important;
+    }
+    
+    .no-products {
+      padding: 30px;
+      text-align: center;
+      color: var(--text-secondary);
+    }
+    
+    /* Mensagens */
+    .message-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+    }
+    
+    .message {
+      padding: 12px 20px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      animation: slideIn 0.3s forwards;
+    }
+    
+    .message-success {
+      background-color: var(--success-color);
+      color: white;
+    }
+    
+    .message-error {
+      background-color: var(--danger-color);
+      color: white;
+    }
+    
+    .message-icon {
+      margin-right: 10px;
+      font-size: 18px;
+    }
+    
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
+    @keyframes fadeOut {
+      from {
+        opacity: 1;
+      }
+      to {
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="page-header">
+      <h1>Cadastro de Estrutura de Produtos</h1>
+      <div class="header-actions">
+        <button id="saveButton" class="btn btn-success">Salvar Estrutura</button>
+        <button id="newButton" class="btn btn-primary">Nova Estrutura</button>
+        <button id="backButton" class="btn btn-secondary">Voltar</button>
+      </div>
+    </div>
+
+    <div class="workspace">
+      <!-- Painel esquerdo - Lista de Produtos -->
+      <div class="panel products-panel">
+        <div class="panel-header">Produtos</div>
+        
+        <div class="search-bar">
+          <label for="productSearch" class="sr-only">Buscar produto</label>
+          <input type="text" id="productSearch" placeholder="Buscar produto...">
+          <span class="search-icon">🔍</span>
+        </div>
+        
+        <div class="categories-list">
+          <div class="category-item active" data-category="todos">
+            <span class="category-icon">📦</span> Todos os produtos
+          </div>
+          <div class="category-item" data-category="MP">
+            <span class="category-icon">🧱</span> Matéria-prima
+          </div>
+          <div class="category-item" data-category="SP">
+            <span class="category-icon">⚙️</span> Semi-produtos
+          </div>
+          <div class="category-item" data-category="SV">
+            <span class="category-icon">🔧</span> Serviços
+          </div>
+          <div class="category-item" data-category="MO">
+            <span class="category-icon">👷</span> Mão de obra
+          </div>
+        </div>
+        
+        <div class="products-list" id="productsList">
+          <!-- Lista de produtos será preenchida por JavaScript -->
+        </div>
+      </div>
+
+      <!-- Painel central - Estrutura de produtos -->
+      <div class="panel structure-panel">
+        <div class="panel-header">
+          <span>Estrutura do Produto</span>
+          <div>
+            <button id="selectProductButton" class="btn btn-primary">Selecionar Produto Pai</button>
+          </div>
+        </div>
+        
+        <div class="structure-container" id="structureContainer">
+          <!-- Produto principal e componentes serão adicionados aqui -->
+          <div class="no-products" id="noProductsMessage">
+            Selecione um produto pai para começar a estrutura
+          </div>
+        </div>
+      </div>
+
+      <!-- Painel direito - Detalhes e Operações -->
+      <div class="panel details-panel">
+        <div class="panel-header">Operações de Fabricação</div>
+        
+        <button id="addOperationButton" class="btn btn-primary add-operation-btn">Adicionar Operação</button>
+        
+        <div class="operations-container" id="operationsContainer">
+          <!-- Operações serão adicionadas aqui -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Seleção de Produto Pai -->
+  <div id="productModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Selecionar Produto Pai</h2>
+        <span class="close-modal" id="closeProductModal">&times;</span>
+      </div>
+      
+      <div class="form-group">
+        <label for="parentProductSearch" class="form-label">Buscar produto (PA/SP)</label>
+        <input type="text" id="parentProductSearch" class="form-control" placeholder="Digite o código ou descrição...">
+      </div>
+      
+      <div id="parentProductResults" style="max-height: 300px; overflow-y: auto; margin-top: 15px;">
+        <!-- Resultados da busca serão mostrados aqui -->
+      </div>
+      
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelProductModal">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Operação -->
+  <div id="operationModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Adicionar Operação</h2>
+        <span class="close-modal" id="closeOperationModal">&times;</span>
+      </div>
+      
+      <div class="form-group">
+        <label for="operationSelect" class="form-label">Operação</label>
+        <select id="operationSelect" class="form-control">
+          <option value="">Selecione a operação...</option>
+          <!-- Lista de operações será preenchida por JavaScript -->
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label for="resourceSelect" class="form-label">Recurso</label>
+        <select id="resourceSelect" class="form-control">
+          <option value="">Selecione o recurso...</option>
+          <!-- Lista de recursos será preenchida por JavaScript -->
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label for="processingTime" class="form-label">Tempo de processamento (minutos)</label>
+        <input type="number" id="processingTime" class="form-control" min="0.1" step="0.1">
+      </div>
+      
+      <div class="form-group">
+        <label for="operationDescription" class="form-label">Descrição</label>
+        <textarea id="operationDescription" class="form-control" rows="2"></textarea>
+      </div>
+      
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelOperationModal">Cancelar</button>
+        <button class="btn btn-success" id="saveOperationButton">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Container de mensagens -->
+  <div class="message-container" id="messageContainer"></div>
+
+  <script>
+    // Dados de exemplo (que seriam carregados do Firebase)
+    const produtos = [
+      { id: "1", codigo: "PA001", descricao: "Cadeira Executiva", tipo: "PA", unidade: "UN" },
+      { id: "2", codigo: "PA002", descricao: "Mesa de Escritório", tipo: "PA", unidade: "UN" },
+      { id: "3", codigo: "SP001", descricao: "Pés da Cadeira", tipo: "SP", unidade: "CJ" },
+      { id: "4", codigo: "SP002", descricao: "Braço da Cadeira", tipo: "SP", unidade: "PA" },
+      { id: "5", codigo: "SP003", descricao: "Assento da Cadeira", tipo: "SP", unidade: "PC" },
+      { id: "6", codigo: "SP004", descricao: "Tampo da Mesa", tipo: "SP", unidade: "PC" },
+      { id: "7", codigo: "MP001", descricao: "Chapa de Aço", tipo: "MP", unidade: "KG" },
+      { id: "8", codigo: "MP002", descricao: "Tubo de Aço", tipo: "MP", unidade: "MT" },
+      { id: "9", codigo: "MP003", descricao: "Parafuso M8", tipo: "MP", unidade: "PC" },
+      { id: "10", codigo: "MP004", descricao: "Espuma", tipo: "MP", unidade: "KG" },
+      { id: "11", codigo: "MP005", descricao: "Tecido", tipo: "MP", unidade: "MT" },
+      { id: "12", codigo: "MP006", descricao: "MDF 18mm", tipo: "MP", unidade: "M2" },
+      { id: "13", codigo: "MP007", descricao: "Cola", tipo: "MP", unidade: "KG" },
+      { id: "14", codigo: "SV001", descricao: "Serviço de Pintura", tipo: "SV", unidade: "SV" },
+      { id: "15", codigo: "MO001", descricao: "Montagem", tipo: "MO", unidade: "HR" }
+    ];
+
+    const operacoes = [
+      { id: "1", numero: "10", operacao: "Corte" },
+      { id: "2", numero: "20", operacao: "Dobra" },
+      { id: "3", numero: "30", operacao: "Solda" },
+      { id: "4", numero: "40", operacao: "Pintura" },
+      { id: "5", numero: "50", operacao: "Montagem" },
+      { id: "6", numero: "60", operacao: "Acabamento" },
+      { id: "7", numero: "70", operacao: "Embalagem" }
+    ];
+
+    const recursos = [
+      { id: "1", codigo: "MAQ001", maquina: "Guilhotina", setor: "Corte" },
+      { id: "2", codigo: "MAQ002", maquina: "Dobradeira", setor: "Dobra" },
+      { id: "3", codigo: "MAQ003", maquina: "Solda MIG", setor: "Solda" },
+      { id: "4", codigo: "MAQ004", maquina: "Cabine de Pintura", setor: "Pintura" },
+      { id: "5", codigo: "MAQ005", maquina: "Bancada de Montagem 1", setor: "Montagem" },
+      { id: "6", codigo: "MAQ006", maquina: "Bancada de Montagem 2", setor: "Montagem" }
+    ];
+
+    // Dados da estrutura atual
+    let currentProductId = null;
+    let components = [];
+    let operations = [];
+    let nextComponentId = 1;
+    let nextOperationId = 1;
+
+    // Elementos DOM
+    const productsList = document.getElementById('productsList');
+    const structureContainer = document.getElementById('structureContainer');
+    const noProductsMessage = document.getElementById('noProductsMessage');
+    const operationsContainer = document.getElementById('operationsContainer');
+    const productSearch = document.getElementById('productSearch');
+    const categoryItems = document.querySelectorAll('.category-item');
+    const addOperationButton = document.getElementById('addOperationButton');
+    const saveButton = document.getElementById('saveButton');
+    const newButton = document.getElementById('newButton');
+    const backButton = document.getElementById('backButton');
+    const selectProductButton = document.getElementById('selectProductButton');
+
+    // Modals
+    const productModal = document.getElementById('productModal');
+    const closeProductModal = document.getElementById('closeProductModal');
+    const cancelProductModal = document.getElementById('cancelProductModal');
+    const parentProductSearch = document.getElementById('parentProductSearch');
+    const parentProductResults = document.getElementById('parentProductResults');
+
+    const operationModal = document.getElementById('operationModal');
+    const closeOperationModal = document.getElementById('closeOperationModal');
+    const cancelOperationModal = document.getElementById('cancelOperationModal');
+    const saveOperationButton = document.getElementById('saveOperationButton');
+    const operationSelect = document.getElementById('operationSelect');
+    const resourceSelect = document.getElementById('resourceSelect');
+    const processingTime = document.getElementById('processingTime');
+    const operationDescription = document.getElementById('operationDescription');
+
+    // Estado do modal de operação
+    let editingOperationId = null;
+
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', function() {
+      initializePage();
+    });
+
+    function initializePage() {
+      loadProducts();
+      initializeOperationModal();
+      setupEventListeners();
+    }
+
+    function loadProducts() {
+      const activeCategory = document.querySelector('.category-item.active').dataset.category;
+      const searchTerm = productSearch.value.toLowerCase();
+      
+      let filteredProducts = produtos;
+      
+      // Filtra por categoria
+      if (activeCategory !== 'todos') {
+        filteredProducts = filteredProducts.filter(p => p.tipo === activeCategory);
+      }
+      
+      // Filtra por termo de busca
+      if (searchTerm) {
+        filteredProducts = filteredProducts.filter(p => 
+          p.codigo.toLowerCase().includes(searchTerm) || 
+          p.descricao.toLowerCase().includes(searchTerm)
+        );
+      }
+      
+      // Ordena por código
+      filteredProducts.sort((a, b) => a.codigo.localeCompare(b.codigo));
+      
+      // Renderiza
+      productsList.innerHTML = '';
+      
+      filteredProducts.forEach(product => {
+        const item = document.createElement('div');
+        item.className = 'product-item';
+        item.draggable = true;
+        item.dataset.id = product.id;
+        item.dataset.codigo = product.codigo;
+        item.dataset.descricao = product.descricao;
+        item.dataset.tipo = product.tipo;
+        item.dataset.unidade = product.unidade;
+        
+        item.innerHTML = `
+          <div class="product-title">${product.descricao}</div>
+          <div>
+            <span class="product-code">${product.codigo}</span>
+            <span class="product-type">${product.tipo}</span>
+          </div>
+        `;
+        
+        productsList.appendChild(item);
+        
+        // Adicionar evento de drag
+        item.addEventListener('dragstart', handleDragStart);
+        item.addEventListener('dragend', handleDragEnd);
+      });
+    }
+
+    function initializeOperationModal() {
+      // Popula o select de operações
+      operationSelect.innerHTML = '<option value="">Selecione a operação...</option>';
+      operacoes.forEach(op => {
+        const option = document.createElement('option');
+        option.value = op.id;
+        option.textContent = `${op.numero} - ${op.operacao}`;
+        operationSelect.appendChild(option);
+      });
+      
+      // Popula o select de recursos
+      resourceSelect.innerHTML = '<option value="">Selecione o recurso...</option>';
+      recursos.forEach(rec => {
+        const option = document.createElement('option');
+        option.value = rec.id;
+        option.textContent = `${rec.codigo} - ${rec.maquina}`;
+        resourceSelect.appendChild(option);
+      });
+    }
+
+    function setupEventListeners() {
+      // Eventos de busca e filtro
+      productSearch.addEventListener('input', loadProducts);
+      categoryItems.forEach(item => {
+        item.addEventListener('click', () => {
+          categoryItems.forEach(i => i.classList.remove('active'));
+          item.classList.add('active');
+          loadProducts();
+        });
+      });
+
+      // Eventos de arrastar e soltar
+      structureContainer.addEventListener('dragover', handleDragOver);
+      structureContainer.addEventListener('drop', handleDrop);
+
+      // Eventos dos botões
+      addOperationButton.addEventListener('click', () => {
+        editingOperationId = null;
+        operationSelect.value = '';
+        resourceSelect.value = '';
+        processingTime.value = '';
+        operationDescription.value = '';
+        operationModal.style.display = 'block';
+      });
+
+      saveOperationButton.addEventListener('click', saveOperation);
+      closeOperationModal.addEventListener('click', () => operationModal.style.display = 'none');
+      cancelOperationModal.addEventListener('click', () => operationModal.style.display = 'none');
+
+      selectProductButton.addEventListener('click', () => {
+        productModal.style.display = 'block';
+        parentProductSearch.value = '';
+        parentProductResults.innerHTML = '';
+      });
+
+      closeProductModal.addEventListener('click', () => productModal.style.display = 'none');
+      cancelProductModal.addEventListener('click', () => productModal.style.display = 'none');
+
+      parentProductSearch.addEventListener('input', () => {
+        const searchTerm = parentProductSearch.value.toLowerCase();
+        const filteredProducts = produtos.filter(p => 
+          p.codigo.toLowerCase().includes(searchTerm) || 
+          p.descricao.toLowerCase().includes(searchTerm)
+        );
+
+        parentProductResults.innerHTML = '';
+        filteredProducts.forEach(product => {
+          const item = document.createElement('div');
+          item.className = 'product-item';
+          item.dataset.id = product.id;
+          item.dataset.codigo = product.codigo;
+          item.dataset.descricao = product.descricao;
+          item.dataset.tipo = product.tipo;
+          item.dataset.unidade = product.unidade;
+
+          item.innerHTML = `
+            <div class="product-title">${product.descricao}</div>
+            <div>
+              <span class="product-code">${product.codigo}</span>
+              <span class="product-type">${product.tipo}</span>
+            </div>
+          `;
+
+          item.addEventListener('click', () => {
+            currentProductId = product.id;
+            noProductsMessage.style.display = 'none';
+            renderMainProduct(product);
+            productModal.style.display = 'none';
+          });
+
+          parentProductResults.appendChild(item);
+        });
+      });
+
+      saveButton.addEventListener('click', saveStructure);
+      newButton.addEventListener('click', resetStructure);
+      backButton.addEventListener('click', () => alert('Funcionalidade de voltar ainda não implementada.'));
+    }
+
+    function handleDragStart(e) {
+      e.dataTransfer.setData('text/plain', e.target.dataset.id);
+      e.target.classList.add('dragging');
+    }
+
+    function handleDragEnd(e) {
+      e.target.classList.remove('dragging');
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      const productId = e.dataTransfer.getData('text/plain');
+      const product = produtos.find(p => p.id === productId);
+
+      if (product) {
+        const component = {
+          id: nextComponentId++,
+          productId: product.id,
+          codigo: product.codigo,
+          descricao: product.descricao,
+          tipo: product.tipo,
+          unidade: product.unidade,
+          quantidade: 1,
+          x: e.offsetX,
+          y: e.offsetY
+        };
+
+        components.push(component);
+        renderComponent(component);
+      }
+    }
+
+    function renderMainProduct(product) {
+      structureContainer.innerHTML = `
+        <div class="main-product">
+          <div class="main-product-title">${product.descricao}</div>
+          <div class="main-product-code">${product.codigo}</div>
+        </div>
+      `;
+    }
+
+    function renderComponent(component) {
+      const componentElement = document.createElement('div');
+      componentElement.className = 'component-item';
+      componentElement.style.left = `${component.x}px`;
+      componentElement.style.top = `${component.y}px`;
+      componentElement.dataset.id = component.id;
+
+      componentElement.innerHTML = `
+        <div class="component-title">${component.descricao}</div>
+        <div class="component-details">
+          <span>${component.codigo}</span>
+          <span>${component.tipo}</span>
+        </div>
+        <div class="component-quantity">
+          <input type="number" value="${component.quantidade}" min="1">
+          <span>${component.unidade}</span>
+        </div>
+        <div class="component-actions">
+          <button class="component-action-btn delete-btn" onclick="deleteComponent(${component.id})">✕</button>
+        </div>
+      `;
+
+      componentElement.addEventListener('dragstart', handleDragStart);
+      componentElement.addEventListener('dragend', handleDragEnd);
+
+      structureContainer.appendChild(componentElement);
+    }
+
+    function deleteComponent(id) {
+      components = components.filter(c => c.id !== id);
+      document.querySelector(`.component-item[data-id="${id}"]`).remove();
+    }
+
+    function saveOperation() {
+      const operationId = operationSelect.value;
+      const resourceId = resourceSelect.value;
+      const time = parseFloat(processingTime.value);
+      const description = operationDescription.value;
+
+      if (!operationId || !resourceId || isNaN(time) || time <= 0) {
+        alert('Preencha todos os campos corretamente.');
+        return;
+      }
+
+      const operation = operacoes.find(op => op.id === operationId);
+      const resource = recursos.find(rec => rec.id === resourceId);
+
+      const newOperation = {
+        id: editingOperationId || nextOperationId++,
+        operationId: operation.id,
+        operation: operation.operacao,
+        resourceId: resource.id,
+        resource: resource.maquina,
+        time: time,
+        description: description
+      };
+
+      if (editingOperationId) {
+        const index = operations.findIndex(op => op.id === editingOperationId);
+        operations[index] = newOperation;
+      } else {
+        operations.push(newOperation);
+      }
+
+      renderOperations();
+      operationModal.style.display = 'none';
+    }
+
+    function renderOperations() {
+      operationsContainer.innerHTML = '';
+      operations.forEach(op => {
+        const item = document.createElement('div');
+        item.className = 'operation-item';
+        item.innerHTML = `
+          <div class="operation-header">
+            <span class="operation-sequence">${op.id}</span>
+            <span class="operation-title">${op.operation}</span>
+          </div>
+          <div class="operation-detail">
+            <span>${op.resource}</span>
+            <span>${op.time} minutos</span>
+          </div>
+          <div class="operation-actions">
+            <button class="btn btn-primary operation-btn" onclick="editOperation(${op.id})">Editar</button>
+            <button class="btn btn-danger operation-btn" onclick="deleteOperation(${op.id})">Excluir</button>
+          </div>
+        `;
+        operationsContainer.appendChild(item);
+      });
+    }
+
+    function editOperation(id) {
+      const operation = operations.find(op => op.id === id);
+      if (operation) {
+        editingOperationId = operation.id;
+        operationSelect.value = operation.operationId;
+        resourceSelect.value = operation.resourceId;
+        processingTime.value = operation.time;
+        operationDescription.value = operation.description;
+        operationModal.style.display = 'block';
+      }
+    }
+
+    function deleteOperation(id) {
+      operations = operations.filter(op => op.id !== id);
+      renderOperations();
+    }
+
+    function saveStructure() {
+      if (!currentProductId) {
+        alert('Selecione um produto pai antes de salvar.');
+        return;
+      }
+
+      const structure = {
+        productId: currentProductId,
+        components: components,
+        operations: operations
+      };
+
+      console.log('Estrutura salva:', structure);
+      showMessage('Estrutura salva com sucesso!', 'success');
+    }
+
+    function resetStructure() {
+      currentProductId = null;
+      components = [];
+      operations = [];
+      nextComponentId = 1;
+      nextOperationId = 1;
+      structureContainer.innerHTML = '';
+      operationsContainer.innerHTML = '';
+      noProductsMessage.style.display = 'block';
+      showMessage('Estrutura resetada com sucesso!', 'success');
+    }
+
+    function showMessage(message, type) {
+      const messageElement = document.createElement('div');
+      messageElement.className = `message message-${type}`;
+      messageElement.innerHTML = `
+        <span class="message-icon">${type === 'success' ? '✔️' : '⚠️'}</span>
+        ${message}
+      `;
+      document.getElementById('messageContainer').appendChild(messageElement);
+      setTimeout(() => {
+        messageElement.remove();
+      }, 5000);
+    }
+  </script>
+</body>
+</html>

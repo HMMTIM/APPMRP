@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parâmetros do Sistema - MRP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #0854a0;
+            --primary-hover: #0a4d8c;
+            --secondary-color: #f0f3f6;
+            --border-color: #d4d4d4;
+            --text-color: #333;
+            --text-secondary: #666;
+            --success-color: #107e3e;
+            --header-bg: #354a5f;
+        }
+
+        .parametro-modificavel {
+            border: 2px solid var(--success-color) !important;
+            padding: 15px !important;
+        }
+
+        .legenda {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .legenda-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legenda-cor {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--success-color);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f7f7f7;
+            color: var(--text-color);
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background-color: var(--header-bg);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px 8px 0 0;
+            margin: -20px -20px 20px -20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 500;
+        }
+
+        .form-container {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .form-title {
+            font-size: 18px;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-col {
+            flex: 1;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--success-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="legenda">
+            <div class="legenda-item">
+                <div class="legenda-cor"></div>
+                <span>Parâmetros que podem ser alterados com segurança</span>
+            </div>
+        </div>
+        <div class="header">
+            <h1>Parâmetros do Sistema</h1>
+            <button class="btn btn-secondary" onclick="window.location.href='index.html'">Voltar</button>
+        </div>
+
+        <form id="parametersForm">
+            <!-- Parâmetros de Rastreabilidade -->
+            <div class="form-container">
+                <h2 class="form-title">Parâmetros de Rastreabilidade</h2>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Máscara do Lote Automático</label>
+                        <select id="mascaraLote">
+                            <option value="AAAAMMDD-SEQ">AAAAMMDD-SEQ (Ex: 20240115-001)</option>
+                            <option value="AAMMDD-SEQ">AAMMDD-SEQ (Ex: 240115-001)</option>
+                            <option value="AASS-SEQ">AASS-SEQ (Ex: 24W2-001)</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label>Rastreabilidade Obrigatória</label>
+                        <label class="switch">
+                            <input type="checkbox" id="rastreabilidadeObrigatoria">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parâmetros de Configuração do Sistema -->
+            <div class="form-container">
+                <h2 class="form-title">Configuração do Sistema</h2>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Controle de Armazém</label>
+                        <label class="switch">
+                            <input type="checkbox" id="controleArmazem">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="form-col">
+                        <label>Homologação de Fornecedores</label>
+                        <label class="switch">
+                            <input type="checkbox" id="homologacaoFornecedor">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Inspeção de Recebimento</label>
+                        <label class="switch">
+                            <input type="checkbox" id="inspecaoRecebimento">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="form-col">
+                        <label>Armazém da Qualidade</label>
+                        <label class="switch">
+                            <input type="checkbox" id="armazemQualidade">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Controle de Qualidade</label>
+                        <label class="switch">
+                            <input type="checkbox" id="controleQualidade">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="form-col">
+                        <label>Rastreabilidade por Lote</label>
+                        <label class="switch">
+                            <input type="checkbox" id="rastreabilidadeLote">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parâmetros Gerais -->
+            <div class="form-container parametro-modificavel">
+                <h2 class="form-title">Parâmetros Gerais</h2>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Dias para Alertas de Vencimento</label>
+                        <input type="number" id="diasAlerta" min="1" value="7">
+                    </div>
+                    <div class="form-col">
+                        <label>Moeda Padrão</label>
+                        <select id="moedaPadrao">
+                            <option value="BRL">Real (R$)</option>
+                            <option value="USD">Dólar (US$)</option>
+                            <option value="EUR">Euro (€)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Formato de Data</label>
+                        <select id="formatoData">
+                            <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                            <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label>Fuso Horário</label>
+                        <select id="fusoHorario">
+                            <option value="America/Sao_Paulo">Brasília (GMT-3)</option>
+                            <option value="UTC">UTC</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parâmetros de Produção -->
+            <div class="form-container">
+                <h2 class="form-title">Parâmetros de Produção</h2>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Tipo de Apontamento</label>
+                        <select id="tipoApontamento">
+                            <option value="simples">Apontamento Simples</option>
+                            <option value="operacao">Apontamento por Operação</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Dias Úteis por Mês</label>
+                        <input type="number" id="diasUteisMes" min="1" max="31" value="22">
+                    </div>
+                    <div class="form-col">
+                        <label>Horas por Turno</label>
+                        <input type="number" id="horasTurno" min="1" max="12" value="8">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Permitir Produção sem Estoque</label>
+                        <label class="switch">
+                            <input type="checkbox" id="permitirProducaoSemEstoque">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="form-col">
+                        <label>Controle de Qualidade Obrigatório</label>
+                        <label class="switch">
+                            <input type="checkbox" id="controleQualidadeObrigatorio">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parâmetros de Estoque -->
+            <div class="form-container">
+                <h2 class="form-title">Parâmetros de Estoque</h2>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Método de Valorização</label>
+                        <select id="metodoValorizacao">
+                            <option value="FIFO">FIFO (Primeiro a Entrar, Primeiro a Sair)</option>
+                            <option value="LIFO">LIFO (Último a Entrar, Primeiro a Sair)</option>
+                            <option value="MEDIO">Custo Médio</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label>Permitir Estoque Negativo</label>
+                        <label class="switch">
+                            <input type="checkbox" id="permitirEstoqueNegativo">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parâmetros de Compras -->
+            <div class="form-container">
+                <h2 class="form-title">Parâmetros de Compras</h2>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Tolerância no Recebimento (%)</label>
+                        <input type="number" id="toleranciaRecebimento" min="0" max="100" step="0.1" value="10">
+                    </div>
+                    <div class="form-col">
+                        <label>Exigir Aprovação Acima da Tolerância</label>
+                        <label class="switch">
+                            <input type="checkbox" id="exigirAprovacaoTolerancia">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Mínimo de Cotações</label>
+                        <input type="number" id="minimoCotacoes" min="1" value="3">
+                    </div>
+                    <div class="form-col">
+                        <label>Dias para Vencimento de Cotações</label>
+                        <input type="number" id="diasVencimentoCotacao" min="1" value="7">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Aprovação Automática até Valor</label>
+                        <input type="number" id="valorAprovacaoAutomatica" min="0" value="1000">
+                    </div>
+                    <div class="form-col">
+                        <label>Bloqueio de Fornecedor por Atraso</label>
+                        <input type="number" id="diasBloqueioFornecedor" min="1" value="30">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parâmetros de Qualidade -->
+            <div class="form-container">
+                <h2 class="form-title">Parâmetros de Qualidade</h2>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Inspeção de Recebimento</label>
+                        <select id="inspecaoRecebimento">
+                            <option value="todos">Todos os Materiais</option>
+                            <option value="criticos">Apenas Críticos</option>
+                            <option value="manual">Definição Manual</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label>Dias para Reanálise de Lote</label>
+                        <input type="number" id="diasReanalise" min="1" value="90">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parâmetros de MRP -->
+            <div class="form-container">
+                <h2 class="form-title">Parâmetros de MRP</h2>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Horizonte de Planejamento (dias)</label>
+                        <input type="number" id="horizontePlanejamento" min="1" value="60">
+                    </div>
+                    <div class="form-col">
+                        <label>Política de Lote</label>
+                        <select id="politicaLote">
+                            <option value="fixo">Lote Fixo</option>
+                            <option value="economico">Lote Econômico</option>
+                            <option value="minimo">Lote Mínimo</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Considerar Previsão de Vendas</label>
+                        <label class="switch">
+                            <input type="checkbox" id="considerarPrevisao">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="form-col">
+                        <label>Dias de Segurança</label>
+                        <input type="number" id="diasSeguranca" min="0" value="5">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parâmetros de Custos -->
+            <div class="form-container">
+                <h2 class="form-title">Parâmetros de Custos</h2>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Método de Custeio</label>
+                        <select id="metodoCusteio">
+                            <option value="padrao">Custo Padrão</option>
+                            <option value="medio">Custo Médio</option>
+                            <option value="fifo">FIFO</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label>Centro de Custos Obrigatório</label>
+                        <label class="switch">
+                            <input type="checkbox" id="centroCustoObrigatorio">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parâmetros de Código de Produto -->
+            <div class="form-container">
+                <h2 class="form-title">Parâmetros de Código de Produto</h2>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Tipo de Codificação</label>
+                        <select id="tipoCodificacao">
+                            <option value="manual">Manual</option>
+                            <option value="inteligente">Inteligente</option>
+                            <option value="semi-inteligente">Semi-Inteligente</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Número de Dígitos Sequenciais</label>
+                        <input type="number" id="digitosSequenciais" min="1" max="4" value="3">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Usar Tipo:</label>
+                        <label class="switch">
+                            <input type="checkbox" id="usarTipo">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="form-col">
+                        <label>Usar Grupo:</label>
+                        <label class="switch">
+                            <input type="checkbox" id="usarGrupo">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="form-col">
+                        <label>Usar Família:</label>
+                        <label class="switch">
+                            <input type="checkbox" id="usarFamilia">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Exemplo de Código:</label>
+                        <input type="text" id="exemploCodigo" readonly>
+                    </div>
+                </div>
+            </div>
+
+
+            <div style="text-align: right; margin-top: 20px;">
+                <button type="submit" class="btn btn-primary">Salvar Parâmetros</button>
+            </div>
+        </form>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD9IGE9oVTKE9kZTaMgmkN9ZmD02ekhos4",
+            authDomain: "naliteck.firebaseapp.com",
+            projectId: "naliteck",
+            storageBucket: "naliteck.appspot.com",
+            messagingSenderId: "866077066540",
+            appId: "1:866077066540:web:b797d4ffed60c30e675889"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.onload = async function() {
+            const userSession = localStorage.getItem('currentUser');
+            if (!userSession) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            await loadParameters();
+        };
+
+        async function loadParameters() {
+            try {
+                const docRef = doc(db, "parametros", "sistema");
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+
+                    document.getElementById('diasAlerta').value = data.diasAlerta || 7;
+                    document.getElementById('moedaPadrao').value = data.moedaPadrao || 'BRL';
+                    document.getElementById('formatoData').value = data.formatoData || 'DD/MM/YYYY';
+                    document.getElementById('fusoHorario').value = data.fusoHorario || 'America/Sao_Paulo';
+                    document.getElementById('diasUteisMes').value = data.diasUteisMes || 22;
+                    document.getElementById('horasTurno').value = data.horasTurno || 8;
+                    document.getElementById('permitirProducaoSemEstoque').checked = data.permitirProducaoSemEstoque || false;
+                    document.getElementById('controleQualidadeObrigatorio').checked = data.controleQualidadeObrigatorio || false;
+                    document.getElementById('metodoValorizacao').value = data.metodoValorizacao || 'MEDIO';
+                    document.getElementById('permitirEstoqueNegativo').checked = data.permitirEstoqueNegativo || false;
+                    document.getElementById('minimoCotacoes').value = data.minimoCotacoes || 3;
+                    document.getElementById('diasVencimentoCotacao').value = data.diasVencimentoCotacao || 7;
+
+                    // Carregar configurações do sistema
+                    if (data.configuracaoSistema) {
+                        document.getElementById('controleArmazem').checked = data.configuracaoSistema.controleArmazem || false;
+                        document.getElementById('homologacaoFornecedor').checked = data.configuracaoSistema.homologacaoFornecedor || false;
+                        document.getElementById('controleQualidade').checked = data.configuracaoSistema.controleQualidade || false;
+                        document.getElementById('rastreabilidadeLote').checked = data.configuracaoSistema.rastreabilidadeLote || false;
+                    }
+
+                    // Carregar configurações de código de produto
+                    if (data.parametrosCodigo) {
+                        document.getElementById('tipoCodificacao').value = data.parametrosCodigo.tipo || 'manual';
+                        document.getElementById('digitosSequenciais').value = data.parametrosCodigo.digitos || '3';
+                        document.getElementById('usarTipo').checked = data.parametrosCodigo.usarTipo !== false;
+                        document.getElementById('usarGrupo').checked = data.parametrosCodigo.usarGrupo !== false;
+                        document.getElementById('usarFamilia').checked = data.parametrosCodigo.usarFamilia !== false;
+                    }
+
+                    // Atualizar exemplo de código
+                    updateExemploCodigo();
+                }
+            } catch (error) {
+                console.error("Erro ao carregar parâmetros:", error);
+                alert("Erro ao carregar parâmetros do sistema.");
+            }
+        }
+
+        document.getElementById('parametersForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const parametros = {
+                diasAlerta: parseInt(document.getElementById('diasAlerta').value),
+                moedaPadrao: document.getElementById('moedaPadrao').value,
+                formatoData: document.getElementById('formatoData').value,
+                fusoHorario: document.getElementById('fusoHorario').value,
+                diasUteisMes: parseInt(document.getElementById('diasUteisMes').value),
+                horasTurno: parseInt(document.getElementById('horasTurno').value),
+                permitirProducaoSemEstoque: document.getElementById('permitirProducaoSemEstoque').checked,
+                controleQualidadeObrigatorio: document.getElementById('controleQualidadeObrigatorio').checked,
+                metodoValorizacao: document.getElementById('metodoValorizacao').value,
+                permitirEstoqueNegativo: document.getElementById('permitirEstoqueNegativo').checked,
+                minimoCotacoes: parseInt(document.getElementById('minimoCotacoes').value),
+                diasVencimentoCotacao: parseInt(document.getElementById('diasVencimentoCotacao').value)
+            };
+
+            const configuracaoSistema = {
+                controleArmazem: document.getElementById('controleArmazem').checked,
+                homologacaoFornecedor: document.getElementById('homologacaoFornecedor').checked,
+                controleQualidade: document.getElementById('controleQualidade').checked,
+                rastreabilidadeLote: document.getElementById('rastreabilidadeLote').checked
+            };
+
+            const parametrosCodigo = {
+                tipo: document.getElementById('tipoCodificacao').value,
+                digitos: parseInt(document.getElementById('digitosSequenciais').value),
+                usarTipo: document.getElementById('usarTipo').checked,
+                usarGrupo: document.getElementById('usarGrupo').checked,
+                usarFamilia: document.getElementById('usarFamilia').checked
+            };
+
+            try {
+                const docRef = doc(db, "parametros", "sistema");
+                await setDoc(docRef, {
+                    ...parametros,
+                    configuracaoSistema,
+                    parametrosCodigo,
+                    lastUpdate: new Date().toISOString()
+                }, { merge: true });
+                alert("Parâmetros salvos com sucesso!");
+                await loadParameters(); // Recarrega os parâmetros após salvar
+            } catch (error) {
+                console.error("Erro ao salvar parâmetros:", error);
+                alert("Erro ao salvar parâmetros do sistema.");
+            }
+        });
+
+        // Função para atualizar exemplo de código
+        function updateExemploCodigo() {
+            const tipo = document.getElementById('usarTipo').checked ? 'PA' : '';
+            const grupo = document.getElementById('usarGrupo').checked ? '001' : '';
+            const familia = document.getElementById('usarFamilia').checked ? '001' : '';
+            const digitos = document.getElementById('digitosSequenciais').value === '3' ? '001' : '0001';
+
+            let exemplo = '';
+            if (tipo) exemplo += tipo;
+            if (grupo) exemplo += grupo;
+            if (familia) exemplo += familia;
+            exemplo += digitos;
+
+            document.getElementById('exemploCodigo').value = exemplo;
+        }
+
+        // Adicionar listeners para atualização do exemplo
+        document.getElementById('usarTipo').addEventListener('change', updateExemploCodigo);
+        document.getElementById('usarGrupo').addEventListener('change', updateExemploCodigo);
+        document.getElementById('usarFamilia').addEventListener('change', updateExemploCodigo);
+        document.getElementById('digitosSequenciais').addEventListener('change', updateExemploCodigo);
+    </script>
+</body>
+</html>

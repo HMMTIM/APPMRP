@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relatório de Necessidades de Compras</title>
+  <style>
+    :root {
+      --primary-color: #0854a0;
+      --primary-hover: #0a4d8c;
+      --secondary-color: #f0f3f6;
+      --border-color: #d4d4d4;
+      --text-color: #333;
+      --text-secondary: #666;
+      --success-color: #107e3e;
+      --success-hover: #0d6e36;
+      --danger-color: #bb0000;
+      --danger-hover: #a30000;
+      --warning-color: #e9730c;
+      --header-bg: #354a5f;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f7f7f7;
+      color: var(--text-color);
+    }
+
+    .container {
+      width: 90%;
+      max-width: 1200px;
+      margin: 50px auto;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+      background-color: var(--header-bg);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px 8px 0 0;
+      margin: -20px -20px 20px -20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      font-weight: 500;
+      margin: 0;
+    }
+
+    .filters {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: var(--secondary-color);
+      border-radius: 8px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    .form-col {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    select, input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    select:focus, input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(8, 84, 160, 0.1);
+    }
+
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+
+    .btn-success {
+      background-color: var(--success-color);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background-color: var(--success-hover);
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      background-color: #6c757d;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background-color: #5a6268;
+    }
+
+    .section {
+      margin-bottom: 30px;
+      padding: 20px;
+      background-color: white;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .section h2 {
+      color: var(--primary-color);
+      font-size: 18px;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .summary {
+      background-color: var(--secondary-color);
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    .data-table th,
+    .data-table td {
+      padding: 12px 15px;
+      border: 1px solid var(--border-color);
+      text-align: left;
+    }
+
+    .data-table th {
+      background-color: var(--secondary-color);
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .data-table tr:hover {
+      background-color: #f8f9fa;
+    }
+
+    .criticidade-alta {
+      background-color: rgba(187, 0, 0, 0.1);
+    }
+
+    .criticidade-media {
+      background-color: rgba(233, 115, 12, 0.1);
+    }
+
+    .criticidade-baixa {
+      background-color: rgba(16, 126, 62, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Relatório de Necessidades de Compras</h1>
+      <div>
+        <button onclick="gerarSolicitacoes()" class="btn-success">Gerar Solicitações</button>
+        <button onclick="window.print()" class="btn-primary">Imprimir</button>
+        <button onclick="exportToExcel()" class="btn-primary">Exportar Excel</button>
+        <button onclick="window.location.href='index.html'" class="btn-secondary">Voltar</button>
+      </div>
+    </div>
+
+    <div class="filters">
+      <div class="form-row">
+        <div class="form-col">
+          <label>Grupo:</label>
+          <select id="filterGrupo" onchange="filtrarDados()">
+            <option value="">Todos</option>
+          </select>
+        </div>
+        <div class="form-col">
+          <label>Família:</label>
+          <select id="filterFamilia" onchange="filtrarDados()">
+            <option value="">Todas</option>
+          </select>
+        </div>
+        <div class="form-col">
+          <label>Criticidade:</label>
+          <select id="filterCriticidade" onchange="filtrarDados()">
+            <option value="">Todas</option>
+            <option value="alta">Alta</option>
+            <option value="media">Média</option>
+            <option value="baixa">Baixa</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div id="reportContent"></div>
+  </div>
+
+  <script type="module">
+    import { db } from './firebase-config.js';
+    import { collection, getDocs, query, where, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    let grupos = [];
+    let familias = [];
+    let produtos = [];
+    let ordensProducao = [];
+    let estoques = [];
+    let necessidades = [];
+
+    window.onload = async function() {
+      await loadData();
+      await processarNecessidades();
+      await updateFilters();
+      await mostrarRelatorio();
+    };
+
+    async function loadData() {
+      const [gruposSnap, familiasSnap, produtosSnap, ordensSnap, estoquesSnap] = await Promise.all([
+        getDocs(collection(db, "grupos")),
+        getDocs(collection(db, "familias")),
+        getDocs(collection(db, "produtos")),
+        getDocs(query(collection(db, "ordensProducao"), where("status", "in", ["PENDENTE", "LIBERADA"]))),
+        getDocs(collection(db, "estoques"))
+      ]);
+
+      grupos = gruposSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      familias = familiasSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      produtos = produtosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      ordensProducao = ordensSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      estoques = estoquesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
+
+    async function processarNecessidades() {
+      necessidades = [];
+
+      ordensProducao.forEach(ordem => {
+        if (!ordem.materiaisNecessarios) return;
+
+        ordem.materiaisNecessarios.forEach(material => {
+          const produto = produtos.find(p => p.id === material.produtoId);
+          if (!produto || produto.tipo === 'PA' || produto.tipo === 'SP') return;
+
+          const estoque = estoques.find(e => e.produtoId === material.produtoId);
+          const saldoAtual = estoque ? estoque.saldo : 0;
+          const necessidade = material.quantidade - saldoAtual;
+
+          if (necessidade <= 0) return;
+
+          const itemExistente = necessidades.find(n => n.produtoId === material.produtoId);
+          if (itemExistente) {
+            itemExistente.quantidade += necessidade;
+            itemExistente.ordens.push(ordem.numero);
+          } else {
+            necessidades.push({
+              produtoId: material.produtoId,
+              produto: produto,
+              quantidade: necessidade,
+              ordens: [ordem.numero],
+              criticidade: calcularCriticidade(necessidade, saldoAtual, produto.leadTime || 0)
+            });
+          }
+        });
+      });
+    }
+
+    function calcularCriticidade(necessidade, saldoAtual, leadTime) {
+      if (saldoAtual <= 0) return 'alta';
+      if (leadTime > 30) return 'alta';
+      if (leadTime > 15) return 'media';
+      return 'baixa';
+    }
+
+    async function updateFilters() {
+      const filterGrupo = document.getElementById('filterGrupo');
+      const filterFamilia = document.getElementById('filterFamilia');
+
+      filterGrupo.innerHTML = '<option value="">Todos</option>';
+      filterFamilia.innerHTML = '<option value="">Todas</option>';
+
+      grupos.forEach(grupo => {
+        filterGrupo.innerHTML += `<option value="${grupo.codigoGrupo}">${grupo.codigoGrupo} - ${grupo.nomeGrupo}</option>`;
+      });
+
+      familias.forEach(familia => {
+        filterFamilia.innerHTML += `<option value="${familia.codigoFamilia}">${familia.codigoFamilia} - ${familia.nomeFamilia}</option>`;
+      });
+    }
+
+    window.filtrarDados = async function() {
+      await mostrarRelatorio();
+    };
+
+    async function mostrarRelatorio() {
+      const grupoSelecionado = document.getElementById('filterGrupo').value;
+      const familiaSelecionada = document.getElementById('filterFamilia').value;
+      const criticidadeSelecionada = document.getElementById('filterCriticidade').value;
+
+      let necessidadesFiltradas = [...necessidades];
+
+      if (grupoSelecionado) {
+        necessidadesFiltradas = necessidadesFiltradas.filter(n => n.produto.grupo === grupoSelecionado);
+      }
+
+      if (familiaSelecionada) {
+        necessidadesFiltradas = necessidadesFiltradas.filter(n => n.produto.familia === familiaSelecionada);
+      }
+
+      if (criticidadeSelecionada) {
+        necessidadesFiltradas = necessidadesFiltradas.filter(n => n.criticidade === criticidadeSelecionada);
+      }
+
+      const necessidadesPorGrupo = {};
+      necessidadesFiltradas.forEach(n => {
+        const grupo = grupos.find(g => g.codigoGrupo === n.produto.grupo);
+        const grupoNome = grupo ? `${grupo.codigoGrupo} - ${grupo.nomeGrupo}` : 'Sem Grupo';
+
+        if (!necessidadesPorGrupo[grupoNome]) {
+          necessidadesPorGrupo[grupoNome] = {
+            itens: [],
+            familias: {}
+          };
+        }
+
+        const familia = familias.find(f => f.codigoFamilia === n.produto.familia);
+        const familiaNome = familia ? `${familia.codigoFamilia} - ${familia.nomeFamilia}` : 'Sem Família';
+
+        if (!necessidadesPorGrupo[grupoNome].familias[familiaNome]) {
+          necessidadesPorGrupo[grupoNome].familias[familiaNome] = [];
+        }
+
+        necessidadesPorGrupo[grupoNome].familias[familiaNome].push(n);
+        necessidadesPorGrupo[grupoNome].itens.push(n);
+      });
+
+      let html = '';
+
+      Object.entries(necessidadesPorGrupo).forEach(([grupoNome, dados]) => {
+        html += `
+          <div class="section">
+            <h2>${grupoNome}</h2>
+            <div class="summary">
+              <p>Total de Itens: ${dados.itens.length}</p>
+              <p>Itens Críticos: ${dados.itens.filter(i => i.criticidade === 'alta').length}</p>
+            </div>
+
+            ${Object.entries(dados.familias).map(([familiaNome, itens]) => `
+              <div class="subsection">
+                <h3>${familiaNome}</h3>
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Código</th>
+                      <th>Descrição</th>
+                      <th>Quantidade</th>
+                      <th>Unidade</th>
+                      <th>Lead Time</th>
+                      <th>Criticidade</th>
+                      <th>Ordens</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${itens.map(item => `
+                      <tr class="criticidade-${item.criticidade}">
+                        <td>${item.produto.codigo}</td>
+                        <td>${item.produto.descricao}</td>
+                        <td>${item.quantidade.toFixed(3)}</td>
+                        <td>${item.produto.unidade}</td>
+                        <td>${item.produto.leadTime || 0} dias</td>
+                        <td>${item.criticidade}</td>
+                        <td>${item.ordens.join(', ')}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      });
+
+      document.getElementById('reportContent').innerHTML = html;
+    }
+
+    window.gerarSolicitacoes = async function() {
+      if (!confirm('Deseja gerar solicitações de compra para as necessidades agrupadas?')) return;
+
+      try {
+        const solicitacoesPorGrupo = {};
+
+        necessidades.forEach(necessidade => {
+          const grupoKey = necessidade.produto.grupo;
+          if (!solicitacoesPorGrupo[grupoKey]) {
+            solicitacoesPorGrupo[grupoKey] = {
+              itens: [],
+              grupo: grupos.find(g => g.codigoGrupo === grupoKey)
+            };
+          }
+
+          solicitacoesPorGrupo[grupoKey].itens.push({
+            produtoId: necessidade.produtoId,
+            codigo: necessidade.produto.codigo,
+            descricao: necessidade.produto.descricao,
+            quantidade: necessidade.quantidade,
+            unidade: necessidade.produto.unidade,
+            ordensOrigem: necessidade.ordens
+          });
+        });
+
+        for (const [grupoKey, dados] of Object.entries(solicitacoesPorGrupo)) {
+          const numeroSequencial = (await getDocs(collection(db, "solicitacoesCompra"))).size + 1;
+
+          await addDoc(collection(db, "solicitacoesCompra"), {
+            numero: `SC${numeroSequencial.toString().padStart(6, '0')}`,
+            dataCriacao: new Date(),
+            status: 'PENDENTE',
+            tipo: 'COMPRA',
+            origem: 'MRP',
+            grupo: grupoKey,
+            itens: dados.itens,
+            observacoes: `Solicitação gerada automaticamente pelo MRP.\nOrdens de Produção: ${[...new Set(dados.itens.flatMap(i => i.ordensOrigem))].join(', ')}`
+          });
+        }
+
+        alert('Solicitações de compra geradas com sucesso!');
+        window.location.href = 'solicitacao_compras.html';
+      } catch (error) {
+        console.error('Erro ao gerar solicitações:', error);
+        alert('Erro ao gerar solicitações de compra.');
+      }
+    };
+
+    window.exportToExcel = function() {
+      // Implementar exportação para Excel
+    };
+  </script>
+</body>
+</html>

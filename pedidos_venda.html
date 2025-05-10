@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HM-SYSTEMS - Pedidos de Venda</title>
+  <style>
+  :root {
+    --primary-color: #0854a0;
+    --primary-hover: #0a4d8c;
+    --secondary-color: #f0f3f6;
+    --border-color: #d4d4d4;
+    --text-color: #333;
+    --text-secondary: #666;
+    --success-color: #107e3e;
+    --success-hover: #0d6e36;
+    --danger-color: #bb0000;
+    --danger-hover: #a30000;
+    --header-bg: #354a5f;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f7f7f7;
+    color: var(--text-color);
+  }
+
+  .sap-header {
+    background-color: var(--header-bg);
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .sap-logo {
+    font-weight: 500;
+    font-size: 24px;
+  }
+
+  #authContainer {
+    font-size: 14px;
+    color: white;
+  }
+
+  .sap-menu {
+    background-color: var(--secondary-color);
+    padding: 10px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .sap-menu span {
+    margin-right: 20px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 14px;
+  }
+
+  .sap-menu span:hover {
+    color: var(--primary-color);
+  }
+
+  .sap-container {
+    padding: 20px;
+    background-color: white;
+    margin: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .sap-title {
+    background-color: var(--secondary-color);
+    padding: 10px;
+    font-weight: 500;
+    font-size: 18px;
+    color: var(--primary-color);
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .sap-form {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-top: 15px;
+  }
+
+  .sap-form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+  }
+
+  label {
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 5px;
+  }
+
+  input, select {
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+    background-color: white;
+  }
+
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(8, 84, 160, 0.1);
+  }
+
+  .sap-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+
+  .sap-table th {
+    background-color: var(--secondary-color);
+    padding: 12px 15px;
+    text-align: left;
+    border: 1px solid var(--border-color);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .sap-table td {
+    padding: 12px 15px;
+    border: 1px solid var(--border-color);
+    font-size: 14px;
+  }
+
+  .sap-table tr:hover {
+    background-color: #f8f9fa;
+  }
+
+
+function determineWorkflow(valorTotal) {
+  // Definição dos níveis de aprovação baseados no valor
+  if (valorTotal <= 10000) {
+    return { niveisNecessarios: 1, limiteValor: 10000 }; // Supervisor
+  } else if (valorTotal <= 50000) {
+    return { niveisNecessarios: 2, limiteValor: 50000 }; // Gerente
+  } else if (valorTotal <= 100000) {
+    return { niveisNecessarios: 3, limiteValor: 100000 }; // Diretor
+  } else {
+    return { niveisNecessarios: 4, limiteValor: null }; // Presidência
+  }
+}
+
+async function approveOrder(orderId) {
+  if (!usuarioAtual) {
+    alert('Por favor, faça login para aprovar pedidos.');
+    return;
+  }
+
+  const pedidoRef = doc(db, "pedidosVenda", orderId);
+  const pedidoDoc = await getDoc(pedidoRef);
+  const pedido = pedidoDoc.data();
+
+  if (!pedido.workflowAprovacao) {
+    alert('Pedido não possui workflow de aprovação configurado.');
+    return;
+  }
+
+  // Verificar se usuário tem alçada para aprovar
+  if (usuarioAtual.nivel < pedido.workflowAprovacao.nivelAtual * 2) {
+    alert('Você não tem alçada para aprovar este pedido.');
+    return;
+  }
+
+  const aprovacao = {
+    nivel: pedido.workflowAprovacao.nivelAtual,
+    aprovadorId: usuarioAtual.id,
+    aprovadorNome: usuarioAtual.nome,
+    data: Timestamp.now(),
+    observacao: prompt('Observações da aprovação:') || ''
+  };
+
+  const novoStatus = pedido.workflowAprovacao.nivelAtual >= pedido.workflowAprovacao.niveisNecessarios 
+    ? 'Aprovado' 
+    : 'Aguardando Aprovação';
+
+  await updateDoc(pedidoRef, {
+    'workflowAprovacao.nivelAtual': pedido.workflowAprovacao.nivelAtual + 1,
+    'workflowAprovacao.aprovacoes': [...pedido.workflowAprovacao.aprovacoes, aprovacao],
+    'historicoAprovacoes': [...(pedido.historicoAprovacoes || []), aprovacao],
+    'status': novoStatus
+  });
+
+  await loadOrders();
+  alert('Aprovação registrada com sucesso!');
+}
+
+  .sap-buttons {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .sap-button {
+    padding: 8px 16px;
+    background-color: var(--success-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+  }
+
+  .sap-button:hover {
+    background-color: var(--success-hover);
+  }
+
+  .sap-button[onclick="window.location.href='home.html'"] {
+    background-color: #6c757d;
+  }
+
+  .sap-button[onclick="window.location.href='home.html'"]:hover {
+    background-color: #5a6268;
+  }
+
+  .sap-button[id="logoutButton"] {
+    background-color: var(--danger-color);
+  }
+
+  .sap-button[id="logoutButton"]:hover {
+    background-color: var(--danger-hover);
+  }
+
+  .sap-table td .sap-button {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+
+  .sap-table td .sap-button:first-child {
+    background-color: #ffc107;
+    color: #000;
+  }
+
+  .sap-table td .sap-button:last-child {
+    background-color: var(--danger-color);
+  }
+
+  .sap-status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--secondary-color);
+    padding: 10px;
+    font-size: 12px;
+    margin-top: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-secondary);
+  }
+
+  .sap-tabs {
+    display: flex;
+    margin-top: 20px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .sap-tab {
+    padding: 8px 16px;
+    background-color: var(--secondary-color);
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    border-bottom: none;
+    margin-right: 2px;
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  .sap-tab.active {
+    background-color: white;
+    border-bottom: 1px solid white;
+    margin-bottom: -1px;
+    color: var(--primary-color);
+  }
+
+  .sap-tab:hover:not(.active) {
+    background-color: #e0e0e0;
+  }
+
+  .field-with-button {
+    display: flex;
+    gap: 5px;
+  }
+
+  .field-with-button input, .field-with-button select {
+    flex-grow: 1;
+  }
+
+  .field-with-button button {
+    background-color: #f0f0f0;
+    border: 1px solid var(--border-color);
+    padding: 0 10px;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+
+  .field-with-button button:hover {
+    background-color: #e0e0e0;
+  }
+
+  .modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+  }
+
+  .modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 20px;
+    width: 80%;
+    max-width: 900px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .close-button {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-secondary);
+  }
+
+  .close-button:hover {
+    color: var(--danger-color);
+  }
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .page-header h1 {
+    font-size: 24px;
+    color: var(--primary-color);
+  }
+
+  .btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--primary-hover);
+  }
+
+  .btn-secondary {
+    background-color: #6c757d;
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .btn-secondary:hover {
+    background-color: #5a6268;
+  }
+
+  .btn-success {
+    background-color: var(--success-color);
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+
+  .btn-success:hover {
+    background-color: var(--success-hover);
+  }
+
+  .btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+
+  .btn-danger:hover {
+    background-color: var(--danger-hover);
+  }
+
+  #notification {
+    display: none;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px;
+    border-radius: 4px;
+    z-index: 1000;
+  }
+  .cost-info {
+    margin-top: 10px;
+  }
+  .cost-info p {
+    margin-bottom: 2px;
+  }
+  .form-group {
+    margin-bottom: 15px;
+  }
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  </style>
+</head>
+<body>
+  <div class="sap-header">
+    <div class="sap-logo">HM-SYSTEMS</div>
+    <div id="authContainer">Usuário: <span id="userStatus">Não logado</span> | Empresa: 1000</div>
+  </div>
+
+  <div class="sap-container">
+    <div class="page-header">
+      <h1>Pedidos de Venda</h1>
+      <div>
+        <button class="btn-secondary" onclick="window.location.href='home.html'">Voltar</button>
+      </div>
+    </div>
+
+    <div class="sap-form">
+        <div class="form-row">
+          <div class="sap-form-group">
+            <label>Buscar Pedido</label>
+            <input type="text" id="searchInput" placeholder="Número, cliente ou produto..." oninput="filterOrders()">
+          </div>
+          <div class="sap-form-group">
+            <label>Filtrar por Status</label>
+            <select id="statusFilter" onchange="filterOrders()">
+              <option value="">Todos os status</option>
+              <option value="Pendente">Pendente</option>
+              <option value="Aguardando Aprovação">Aguardando Aprovação</option>
+              <option value="Aprovado">Aprovado</option>
+              <option value="Análise">Em Análise Financeira</option>
+              <option value="Produção">Em Produção</option>
+              <option value="Faturado">Faturado</option>
+              <option value="Concluído">Concluído</option>
+              <option value="Cancelado">Cancelado</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="sap-form-group">
+            <label>Data Inicial</label>
+            <input type="date" id="dataInicial" onchange="filterOrders()">
+          </div>
+          <div class="sap-form-group">
+            <label>Data Final</label>
+            <input type="date" id="dataFinal" onchange="filterOrders()">
+          </div>
+          <div class="sap-form-group">
+            <label>Ordenar por</label>
+            <select id="sortOrder" onchange="filterOrders()">
+              <option value="numero">Número do Pedido</option>
+              <option value="data">Data</option>
+              <option value="cliente">Cliente</option>
+              <option value="valor">Valor</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+    <div class="sap-tabs">
+      <div class="sap-tab active">Lista de Pedidos</div>
+      <div class="sap-tab">Relatórios</div>
+    </div>
+
+    <table class="sap-table">
+      <thead>
+        <tr>
+          <th>Número</th>
+          <th>Data</th>
+          <th>Cliente</th>
+          <th>Produto</th>
+          <th>Quantidade</th>
+          <th>Valor Total (R$)</th>
+          <th>Data Entrega</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="orderTableBody"></tbody>
+    </table>
+
+    <!-- Detalhes do pedido em modal -->
+    <div id="orderDetailsModal" class="modal">
+      <div class="modal-content">
+        <span class="close-button" onclick="closeModal('orderDetailsModal')">&times;</span>
+        <div class="modal-header">
+          <h2>Detalhes do Pedido</h2>
+        </div>
+        <div class="modal-body" id="orderDetailsContent">
+          <div class="detail-section">
+            <h3>Informações Gerais</h3>
+            <div id="generalInfo"></div>
+          </div>
+          <div class="detail-section">
+            <h3>Informações de Entrega</h3>
+            <div id="deliveryInfo"></div>
+          </div>
+          <div class="detail-section">
+            <h3>Informações Financeiras</h3>
+            <div id="financialInfo"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sap-buttons">
+
+          <div id="custoInfo"></div>
+
+      <button class="sap-button" onclick="openOrderModal()">Novo Pedido</button>
+      <button class="sap-button" onclick="window.location.href='home.html'">Voltar</button>
+      <button class="sap-button" id="logoutButton" style="display: none;" onclick="logout()">Sair</button>
+    </div>
+  </div>
+
+  <div id="orderModal" class="modal">
+    <div class="modal-content">
+      <span class="close-button" onclick="closeModal()">×</span>
+      <div class="sap-title" id="modalTitle">Criar Pedido de Venda</div>
+      <form id="orderForm" onsubmit="handleOrder(event)">
+        <div class="sap-form">
+          <div class="sap-form-group">
+            <label>Cliente</label>
+            <div class="field-with-button">
+              <select id="clientSelect" required>
+                <option value="">Selecione o cliente...</option>
+              </select>
+              <button type="button">🔍</button>
+            </div>
+          </div>
+          <div class="sap-form-group">
+            <label>Produto</label>
+            <div class="field-with-button">
+              <select id="productSelect" required onchange="updateUnitPrice()">
+                <option value="">Selecione o produto...</option>
+              </select>
+              <button type="button">🔍</button>
+            </div>
+          </div>
+          <div class="sap-form-group">
+            <label>Quantidade</label>
+            <input type="number" id="quantity" min="0.001" step="0.001" required oninput="calculateTotal()">
+          </div>
+          <div class="sap-form-group">
+            <label>Valor Unitário (R$)</label>
+            <input type="number" id="valorUnitario" min="0" step="0.01" readonly>
+          </div>
+          <div class="sap-form-group">
+            <label>Valor Total (R$)</label>
+            <input type="number" id="valorTotal" step="0.01" readonly>
+          </div>
+          <div class="sap-form-group">
+            <label>Condição de Pagamento</label>
+            <select id="condicaoPagamento" required>
+              <option value="">Selecione a condição...</option>
+              <option value="A_VISTA">À Vista</option>
+              <option value="30_DIAS">30 Dias</option>
+              <option value="60_DIAS">60 Dias</option>
+              <option value="PARCELADO_3X">Parcelado 3x</option>
+            </select>
+          </div>
+          <div class="sap-form-group">
+            <label>Prioridade de Entrega</label>
+            <select id="prioridadeEntrega" required>
+              <option value="NORMAL">Normal</option>
+              <option value="ALTA">Alta</option>
+              <option value="URGENTE">Urgente</option>
+            </select>
+          </div>
+          <div class="sap-form-group">
+            <label>Tipo de Frete</label>
+            <select id="freteTipo" required>
+              <option value="">Selecione o tipo de frete...</option>
+              <option value="CIF">CIF</option>
+              <option value="FOB">FOB</option>
+            </select>
+          </div>
+          <div class="sap-form-group">
+            <label>Incoterm</label>
+            <select id="incoterm" required>
+              <option value="">Selecione o Incoterm...</option>
+              <option value="EXW">EXW</option>
+              <option value="FCA">FCA</option>
+              <option value="CPT">CPT</option>
+              <option value="CIP">CIP</option>
+              <option value="DAP">DAP</option>
+              <option value="DDP">DDP</option>
+            </select>
+          </div>
+          <div class="sap-form-group">
+            <label>Transportadora</label>
+            <input type="text" id="transportadora" placeholder="Nome da transportadora" required>
+          </div>
+          <div class="sap-form-group">
+            <label>Valor do Frete (R$)</label>
+            <input type="number" id="valorFrete" min="0" step="0.01" value="0" required>
+          </div>
+          <div class="sap-form-group">
+            <label>Prazo de Entrega (dias)</label>
+            <input type="number" id="prazoFrete" min="0" step="1" value="0" required>
+          </div>
+          <div class="sap-form-group">
+            <label>Data de Entrega</label>
+            <input type="date" id="dueDate" required>
+          </div>
+        </div>
+        <div class="sap-buttons">
+          <button type="submit" class="sap-button">Salvar</button>
+          <button type="button" class="sap-button" onclick="closeModal()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+
+    <div class="sap-status">
+      <div>Transação: PV01 - Pedidos de Venda</div>
+      <div>Sistema: PRD | Cliente: 800</div>
+    </div>
+
+  <div id="notification"></div>
+
+  <script>
+    // Check user authentication status immediately
+    const storedUser = localStorage.getItem('currentUser');
+    let usuarioAtual = storedUser ? JSON.parse(storedUser) : null;
+
+    // Update UI based on authentication status
+    if (usuarioAtual) {
+      document.getElementById('userStatus').textContent = usuarioAtual.nome;
+      document.getElementById('logoutButton').style.display = 'inline';
+    } else {
+      window.location.href = 'login.html';
+    }
+
+    function openOrderModal() {
+      if (!usuarioAtual) {
+        alert('Por favor, faça login para criar pedidos.');
+        window.location.href = 'login.html';
+        return;
+      }
+      document.getElementById('modalTitle').textContent = 'Criar Pedido de Venda';
+      document.getElementById('orderModal').style.display = 'block';
+      document.getElementById('orderForm').onsubmit = handleOrder;
+    }
+
+    // Make functions accessible globally
+    window.openOrderModal = openOrderModal;
+    window.logout = function() {
+      localStorage.removeItem('currentUser');
+      window.location.href = 'login.html';
+    };
+
+    // Define handleOrder function
+    window.handleOrder = async function(event) {
+      event.preventDefault();
+
+      if (!usuarioAtual) {
+        alert('Por favor, faça login para criar pedidos.');
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const orcamentoId = document.getElementById('orcamentoSelect').value;
+      if (orcamentoId) {
+        const orcamentoDoc = await getDoc(doc(db, "orcamentos", orcamentoId));
+        const orcamento = orcamentoDoc.data();
+
+        if (orcamento.status !== 'Aprovado pelo Cliente') {
+          alert('Só é possível criar pedidos a partir de orçamentos aprovados pelo cliente.');
+          return;
+        }
+      }
+
+      const clientId = document.getElementById('clientSelect').value;
+      const productId = document.getElementById('productSelect').value;
+      const quantidade = parseFloat(document.getElementById('quantity').value);
+      const valorUnitario = parseFloat(document.getElementById('valorUnitario').value);
+      const valorTotal = parseFloat(document.getElementById('valorTotal').value);
+      const condicaoPagamento = document.getElementById('condicaoPagamento').value;
+      const prioridadeEntrega = document.getElementById('prioridadeEntrega').value;
+      const freteTipo = document.getElementById('freteTipo').value;
+      const incoterm = document.getElementById('incoterm').value;
+      const transportadora = document.getElementById('transportadora').value;
+      const valorFrete = parseFloat(document.getElementById('valorFrete').value);
+      const prazoFrete = parseInt(document.getElementById('prazoFrete').value);
+      const dueDate = document.getElementById('dueDate').value;
+
+      // Verificar status financeiro do cliente
+      const statusCliente = await checkClienteStatus(clientId, valorTotal);
+      if (!statusCliente.aprovado) {
+        alert(`Pedido não pode ser processado: ${statusCliente.motivo}. Entre em contato com o setor financeiro.`);
+        return;
+      }
+
+      if (!clientId || !productId || !quantidade || !condicaoPagamento || !freteTipo || !incoterm || !transportadora || !dueDate) {
+        alert('Por favor, preencha todos os campos obrigatórios.');
+        return;
+      }
+
+      const produto = produtos.find(p => p.id === productId);
+      const estoque = await getDocs(collection(db, "estoques"));
+      const estoqueProduto = estoque.docs.find(e => e.data().produtoId === productId);
+      const saldoAtual = estoqueProduto ? estoqueProduto.data().saldo : 0;
+
+      if (quantidade > saldoAtual) {
+        alert(`Quantidade solicitada (${quantidade} ${produto.unidade}) excede o estoque disponível (${saldoAtual} ${produto.unidade}).`);
+        return;
+      }
+
+      const workflowAprovacao = determineWorkflow(valorTotal);
+      
+      try {
+        const numeroSequencial = (pedidos.length + 1).toString().padStart(6, '0');
+        const pedido = {
+          numero: numeroSequencial,
+          clienteId,
+          produtoId,
+          quantidade,
+          valorUnitario,
+          valorTotal,
+          condicaoPagamento,
+          prioridadeEntrega,
+          freteTipo,
+          incoterm,
+          transportadora,
+          valorFrete,
+          prazoFrete,
+          dataEntrega: Timestamp.fromDate(new Date(dueDate)),
+          status: 'Aguardando Aprovação',
+          dataCriacao: Timestamp.now(),
+          criadoPor: usuarioAtual?.id || 'Desconhecido',
+          workflowAprovacao: {
+            nivelAtual: 1,
+            niveisNecessarios: workflowAprovacao.niveisNecessarios,
+            aprovacoes: [],
+            limiteValor: workflowAprovacao.limiteValor
+          },
+          historicoAprovacoes: []
+        };
+
+        await addDoc(collection(db, "pedidosVenda"), pedido);
+
+        if (estoqueProduto) {
+          await updateDoc(doc(db, "estoques", estoqueProduto.id), {
+            saldo: saldoAtual - quantidade,
+            ultimaMovimentacao: Timestamp.now()
+          });
+          await addDoc(collection(db, "movimentacoesEstoque"), {
+            produtoId,
+            tipo: 'SAIDA',
+            quantidade,
+            valorUnitario,
+            valorTotal: quantidade * valorUnitario,
+            tipoDocumento: 'VENDA',
+            numeroDocumento: numeroSequencial,
+            observacoes: `Saída para pedido ${numeroSequencial}`,
+            dataHora: Timestamp.now(),
+            criadoPor: usuarioAtual?.id || 'Desconhecido'
+          });
+        }
+
+        alert(`Pedido ${numeroSequencial} criado com sucesso!`);
+        closeModal();
+        await loadInitialData();
+        await loadOrders();
+      } catch (error) {
+        console.error("Erro ao criar pedido:", error);
+        alert("Erro ao criar pedido.");
+      }
+    };
+  </script>
+  <script type="module">
+    import { db } from './firebase-config.js';
+    import { 
+      collection, 
+      addDoc, 
+      getDocs,
+      query,
+      where,
+      orderBy,
+      limit,
+      Timestamp,
+      doc,
+      updateDoc,
+      deleteDoc,
+      getDoc
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    let clientes = [];
+    let produtos = [];
+    let pedidos = [];
+    let usuarioAtual = null;
+    let faturas = [];
+
+    // Função para definir o usuário atual
+    function setUsuarioAtual(userData) {
+      usuarioAtual = userData;
+    }
+
+    window.onload = async function() {
+      const userData = JSON.parse(localStorage.getItem('currentUser'));
+      if (!userData) {
+        window.location.href = 'login.html';
+        return;
+      }
+      setUsuarioAtual(userData);
+
+      document.getElementById('userStatus').textContent = usuarioAtual.nome;
+      document.getElementById('logoutButton').style.display = 'inline';
+
+      await loadInitialData();
+      updateSelects();
+      await loadOrders();
+    };
+
+    async function loadInitialData() {
+      try {
+        // Limit initial load to 50 most recent orders
+        const [fornecedoresSnap, produtosSnap, pedidosSnap, precosSnap] = await Promise.all([
+          getDocs(query(collection(db, "fornecedores"), 
+            where("tipo", "in", ["Cliente", "Ambos"]),
+            where("ativo", "==", true))),
+          getDocs(query(collection(db, "produtos"),
+            where("status", "==", "ativo"),
+            limit(50))),
+          getDocs(query(collection(db, "pedidosVenda"),
+            orderBy("dataCriacao", "desc"),
+            limit(50))),
+          getDocs(query(collection(db, "tabelaPrecos"),
+            limit(50)))
+        ]);
+
+        clientes = fornecedoresSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        produtos = produtosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        pedidos = pedidosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const precos = precosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // Atualizar select de clientes
+        const clientSelect = document.getElementById('clientSelect');
+        clientSelect.innerHTML = '<option value="">Selecione o cliente...</option>';
+        clientes.forEach(cliente => {
+          clientSelect.innerHTML += `<option value="${cliente.id}">${cliente.nome}</option>`;
+        });
+
+        // Atualizar select de produtos
+        const productSelect = document.getElementById('productSelect');
+        productSelect.innerHTML = '<option value="">Selecione o produto...</option>';
+        produtos
+          .filter(p => p.status === 'ativo')
+          .forEach(produto => {
+            const preco = precos.find(p => p.produtoId === produto.id);
+            if (preco) {
+              produto.precoVenda = preco.precoVenda;
+              produto.custoMedio = preco.custoMedio;
+              produto.margemLucro = preco.margemLucro;
+            }
+            productSelect.innerHTML += `
+              <option value="${produto.id}" 
+                      data-preco="${produto.precoVenda || 0}"
+                      data-custo="${usuarioAtual?.perfil === 'ADMIN' ? (produto.custoMedio || 0) : '0'}"
+                      data-margem="${usuarioAtual?.perfil === 'ADMIN' ? (produto.margemLucro || 0) : '0'}">
+                ${produto.codigo} - ${produto.descricao}
+              </option>`;
+          });
+
+        // Update existing client select
+        clientSelect.innerHTML = '<option value="">Selecione o cliente...</option>';
+        clientes.forEach(cliente => {
+          clientSelect.innerHTML += `<option value="${cliente.id}">${cliente.nome}</option>`;
+        });
+
+        // Update product select
+        productSelect.innerHTML = '<option value="">Selecione o produto...</option>';
+        produtos.forEach(produto => {
+          productSelect.innerHTML += `<option value="${produto.id}">${produto.codigo} - ${produto.descricao}</option>`;
+        });
+
+      } catch (error) {
+        console.error("Erro ao carregar dados:", error);
+        alert("Erro ao carregar dados.");
+      }
+    }
+
+    function updateSelects() {
+      const clientSelect = document.getElementById('clientSelect');
+      const productSelect = document.getElementById('productSelect');
+
+      clientSelect.innerHTML = '<option value="">Selecione o cliente...</option>';
+      clientes.forEach(cliente => {
+        clientSelect.innerHTML += `<option value="${cliente.id}">${cliente.nome}</option>`;
+      });
+
+      productSelect.innerHTML = '<option value="">Selecione o produto...</option>';
+      produtos.forEach(produto => {
+        productSelect.innerHTML += `
+          <option value="${produto.id}">
+            ${produto.codigo} - ${produto.descricao} (${produto.tipo})
+          </option>`;
+      });
+    }
+
+    async function loadOrders() {
+      const tableBody = document.getElementById('orderTableBody');
+      tableBody.innerHTML = '';
+
+      const faturasSnap = await getDocs(collection(db, "faturas"));
+      faturas = faturasSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      for (const pedido of pedidos) {
+        const cliente = clientes.find(c => c.id === pedido.clienteId);
+        const produto = produtos.find(p => p.id === pedido.produtoId);
+        const faturado = faturas.some(f => f.pedidoId === pedido.id);
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${pedido.numero}</td>
+          <td>${new Date(pedido.dataCriacao.seconds * 1000).toLocaleDateString()}</td>
+          <td>${cliente ? cliente.nome : 'Desconhecido'}</td>
+          <td>${produto ? `${produto.codigo} - ${produto.descricao}` : 'Desconhecido'}</td>
+          <td>${pedido.quantidade} ${produto?.unidade || ''}</td>
+          <td>R$${(pedido.valorTotal + (pedido.valorFrete || 0)).toFixed(2)}</td>
+          <td>${pedido.freteTipo || '-'}</td>
+          <td>${pedido.transportadora || '-'}</td>
+          <td>${pedido.incoterm || '-'}</td>
+          <td>${new Date(pedido.dataEntrega.seconds * 1000).toLocaleDateString()}</td>
+          <td>${pedido.status}</td>
+          <td>
+            <button class="btn-primary" onclick="editOrder('${pedido.id}')">Editar</button>
+            ${pedido.status === 'Aguardando Aprovação' && usuarioAtual.nivel >= 6 ? 
+              `<button class="btn-success" onclick="approveOrder('${pedido.id}')">Aprovar</button>` : ''}
+            ${pedido.status === 'Concluído' && !faturado ? 
+              `<button class="btn-success" onclick="gerarFatura('${pedido.id}')">Faturar</button>` : ''}
+            <button class="btn-danger" onclick="deleteOrder('${pedido.id}')">Excluir</button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      }
+    }
+
+    window.filterOrders = function() {
+      const searchText = document.getElementById('searchInput').value.toLowerCase();
+      const statusFilter = document.getElementById('statusFilter').value;
+
+      const rows = document.getElementById('orderTableBody').getElementsByTagName('tr');
+
+      for (const row of rows) {
+        const numero = row.cells[0].textContent.toLowerCase();
+        const cliente = row.cells[1].textContent.toLowerCase();
+        const produto = row.cells[2].textContent.toLowerCase();
+        const status = row.cells[9].textContent;
+
+        const matchesSearch = numero.includes(searchText) || cliente.includes(searchText) || produto.includes(searchText);
+        const matchesStatus = !statusFilter || status === statusFilter;
+
+        row.style.display = matchesSearch && matchesStatus ? '' : 'none';
+      }
+    };
+
+    window.openOrderModal = function() {
+      if (!usuarioAtual) {
+        alert('Por favor, faça login para criar pedidos.');
+        window.location.href = 'login.html';
+        return;
+      }
+      document.getElementById('modalTitle').textContent = 'Criar Pedido de Venda';
+      document.getElementById('orderModal').style.display = 'block';
+      document.getElementById('orderForm').onsubmit = handleOrder;
+    };
+
+    window.closeModal = function(modalId = 'orderModal') {
+      document.getElementById(modalId).style.display = 'none';
+      document.getElementById('orderForm').reset();
+    };
+
+    window.updateUnitPrice = function() {
+      const productSelect = document.getElementById('productSelect');
+      const option = productSelect.options[productSelect.selectedIndex];
+      const valorUnitarioInput = document.getElementById('valorUnitario');
+      const custoInfo = document.getElementById('custoInfo');
+
+      if (option) {
+        valorUnitarioInput.value = option.dataset.preco || 0;
+
+        // Mostrar informações de custo e margem apenas para administradores
+        if (usuarioAtual?.perfil === 'ADMIN') {
+          const custo = parseFloat(option.dataset.custo);
+          const margem = parseFloat(option.dataset.margem);
+          custoInfo.innerHTML = `
+            <div class="cost-info">
+              <p>Custo Médio: R$ ${custo.toFixed(2)}</p>
+              <p>Margem: ${margem.toFixed(2)}%</p>
+            </div>`;
+        } else {
+          custoInfo.innerHTML = '';
+        }
+      } else {
+        valorUnitarioInput.value = 0;
+        custoInfo.innerHTML = '';
+      }
+      calculateTotal();
+    };
+
+    window.calculateTotal = function() {
+      const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+      const valorUnitario = parseFloat(document.getElementById('valorUnitario').value) || 0;
+      const valorFrete = parseFloat(document.getElementById('valorFrete').value) || 0;
+      const valorTotal = (quantity * valorUnitario) + valorFrete;
+      document.getElementById('valorTotal').value = valorTotal.toFixed(2);
+    };
+
+    async function checkClienteStatus(clienteId, valorTotal) {
+      try {
+        const fornecedorDoc = await getDoc(doc(db, "fornecedores", clienteId));
+        if (!fornecedorDoc.exists()) {
+          throw new Error("Cliente não encontrado");
+        }
+        const cliente = fornecedorDoc.data();
+
+        // Verificar se é um cliente ou ambos
+        if (cliente.tipo !== 'Cliente' && cliente.tipo !== 'Ambos') {
+          return { aprovado: false, motivo: "Parceiro não está configurado como cliente" };
+        }
+
+        // Verificar limite de crédito
+        const limiteCredito = cliente.limite || 0;
+        const creditoUtilizado = cliente.creditoUtilizado || 0;
+
+        // Buscar faturas em atraso
+        const faturasSnap = await getDocs(
+          query(collection(db, "contasAReceber"),
+            where("clienteId", "==", clienteId),
+            where("status", "==", "VENCIDO")
+          )
+        );
+
+        const temFaturasVencidas = !faturasSnap.empty;
+        const temLimiteDisponivel = (limiteCredito - creditoUtilizado) >= valorTotal;
+
+        if (temFaturasVencidas) {
+          return { aprovado: false, motivo: "Cliente possui faturas vencidas. Entre em contato com o setor financeiro." };
+        }
+
+        if (!temLimiteDisponivel) {
+          return { aprovado: false, motivo: `Limite de crédito excedido. Limite disponível: R$ ${(limiteCredito - creditoUtilizado).toFixed(2)}` };
+        }
+
+        // Verificar status de homologação
+        if (cliente.statusHomologacao !== 'Homologado') {
+          return { aprovado: false, motivo: "Cliente ainda não foi homologado pelo setor financeiro" };
+        }
+
+        return { aprovado: true, motivo: "OK" };
+      } catch (error) {
+        console.error("Erro ao verificar status do cliente:", error);
+        return { aprovado: false, motivo: "Erro ao verificar status do cliente: " + error.message };
+      }
+    }
+
+    async function checkIfRequiresApproval(clienteId, valorTotal) {
+      // Implement your logic here to determine if approval is required.
+      // This could be based on the client's credit limit, order value, or other factors.
+      // For this example, we'll simply return true if the order value is above 1000.
+      return valorTotal > 1000;
+    }
+
+    window.editOrder = async function(orderId) {
+      if (!usuarioAtual) {
+        alert('Por favor, faça login para editar pedidos.');
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const pedido = pedidos.find(p => p.id === orderId);
+      if (!pedido) return;
+
+      document.getElementById('modalTitle').textContent = `Editar Pedido ${pedido.numero}`;
+      document.getElementById('clientSelect').value = pedido.clienteId;
+      document.getElementById('productSelect').value = pedido.produtoId;
+      document.getElementById('quantity').value = pedido.quantidade;
+      document.getElementById('valorUnitario').value = pedido.valorUnitario;
+      document.getElementById('valorTotal').value = pedido.valorTotal;
+      document.getElementById('condicaoPagamento').value = pedido.condicaoPagamento;
+      document.getElementById('prioridadeEntrega').value = pedido.prioridadeEntrega;
+      document.getElementById('freteTipo').value = pedido.freteTipo;
+      document.getElementById('incoterm').value = pedido.incoterm;
+      document.getElementById('transportadora').value = pedido.transportadora;
+      document.getElementById('valorFrete').value = pedido.valorFrete;
+      document.getElementById('prazoFrete').value = pedido.prazoFrete;
+      document.getElementById('dueDate').value = new Date(pedido.dataEntrega.seconds * 1000).toISOString().slice(0, 10);
+      document.getElementById('orderModal').style.display = 'block';
+    };
+
+    async function deleteOrder(orderId) {
+      if (!usuarioAtual) {
+        alert('Por favor, faça login para excluir pedidos.');
+        window.location.href = 'login.html';
+        return;
+      }
+
+      if (!confirm("Tem certeza que deseja excluir este pedido?")) {
+        return;
+      }
+
+      try {
+        await deleteDoc(doc(db, "pedidosVenda", orderId));
+        alert('Pedido excluído com sucesso!');
+        await loadOrders();
+      } catch (error) {
+        console.error("Erro ao excluir pedido:", error);
+        alert("Erro ao excluir pedido.");
+      }
+    }
+
+    async function gerarFatura(pedidoId) {
+      if (!usuarioAtual) {
+        alert('Por favor, faça login para gerar faturas.');
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const pedido = pedidos.find(p => p.id === pedidoId);
+      if (!pedido) return;
+
+      try {
+        const numeroSequencial = (faturas.length + 1).toString().padStart(6, '0');
+        const fatura = {
+          numero: numeroSequencial,
+          pedidoId,
+          clienteId: pedido.clienteId,
+          valorTotal: pedido.valorTotal,
+          status: "Em Aberto",
+          dataEmissao: Timestamp.now(),
+          dataVencimento: Timestamp.fromDate(new Date(pedido.dataEntrega.seconds * 1000))
+        };
+
+        await addDoc(collection(db, "faturas"), fatura);
+        await updateDoc(doc(db, "pedidosVenda", pedidoId), { status: "Faturado" });
+        alert(`Fatura ${numeroSequencial} gerada com sucesso!`);
+        await loadOrders();
+      } catch (error) {
+        console.error("Erro ao gerar fatura:", error);
+        alert("Erro ao gerar fatura.");
+      }
+    }
+
+    // Funções para gestão de preços
+    async function openPriceManagement() {
+      if (!usuarioAtual || (usuarioAtual.nivel < 6)) {
+        alert('Acesso restrito à gerência e diretoria.');
+        return;
+      }
+
+      document.getElementById('priceManagementModal').style.display = 'block';
+      loadProductsForPricing();
+    }
+
+    async function loadProductsForPricing() {
+      const select = document.getElementById('priceProductSelect');
+      select.innerHTML = '<option value="">Selecione o produto...</option>';
+      produtos.forEach(produto => {
+        select.innerHTML += `<option value="${produto.id}">${produto.codigo} - ${produto.descricao}</option>`;
+      });
+    }
+
+    async function savePriceTable() {
+      const produtoId = document.getElementById('priceProductSelect').value;
+      const precoVenda = parseFloat(document.getElementById('precoVenda').value);
+      const custoMedio = parseFloat(document.getElementById('custoMedio').value);
+      const margemLucro = parseFloat(document.getElementById('margemLucro').value);
+
+      if (!produtoId || isNaN(precoVenda) || isNaN(custoMedio) || isNaN(margemLucro)) {
+        alert('Preencha todos os campos corretamente.');
+        return;
+      }
+
+      try {
+        await addDoc(collection(db, "tabelaPrecos"), {
+          produtoId,
+          precoVenda,
+          custoMedio,
+          margemLucro,
+          atualizadoPor: usuarioAtual.id,
+          dataAtualizacao: Timestamp.now()
+        });
+
+        alert('Preços atualizados com sucesso!');
+        closeModal('priceManagementModal');
+        await loadInitialData();
+      } catch (error) {
+        console.error("Erro ao salvar preços:", error);
+        alert("Erro ao salvar preços.");
+      }
+    }
+
+    // Função para aprovar pedido
+    async function approveOrder(orderId) {
+      if (!usuarioAtual || usuarioAtual.nivel < 6) {
+        alert('Apenas gerência e diretoria podem aprovar pedidos.');
+        return;
+      }
+
+      try {
+        await updateDoc(doc(db, "pedidosVenda", orderId), {
+          status: 'Aprovado',
+          aprovadoPor: usuarioAtual.id,
+          dataAprovacao: Timestamp.now()
+        });
+
+        alert('Pedido aprovado com sucesso!');
+        await loadOrders();
+      } catch (error) {
+        console.error("Erro ao aprovar pedido:", error);
+        alert("Erro ao aprovar pedido.");
+      }
+    }
+  </script>

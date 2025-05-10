@@ -1,0 +1,165 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Backup do Sistema</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Backup do Sistema</h1>
+      <button class="btn-secondary" onclick="window.location.href='index.html'">Voltar</button>
+    </div>
+
+    <div class="content">
+      <div class="card">
+        <h2>Backup Manual</h2>
+        <button onclick="exportarDados()" class="btn-primary">Exportar Dados</button>
+        <div id="progressBar" style="display:none">
+          <progress value="0" max="100" id="progress"></progress>
+          <span id="progressText">0%</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Backup Automático</h2>
+        <div class="form-group">
+          <label>Frequência</label>
+          <select id="frequencia">
+            <option value="diario">Diário</option>
+            <option value="semanal">Semanal</option>
+            <option value="mensal">Mensal</option>
+          </select>
+        </div>
+        <button onclick="configurarBackupAutomatico()" class="btn-success">Salvar Configuração</button>
+      </div>
+
+      <div class="card">
+        <h2>Histórico de Backups</h2>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Tipo</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="historicoBackup"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { db } from './firebase-config.js';
+    import { collection, getDocs, addDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const collections = [
+      'produtos', 'estruturas', 'ordensProducao', 'estoques',
+      'fornecedores', 'usuarios', 'movimentacoes', 'qualidade'
+    ];
+
+    async function exportarDados() {
+      const progressBar = document.getElementById('progressBar');
+      const progress = document.getElementById('progress');
+      const progressText = document.getElementById('progressText');
+      
+      progressBar.style.display = 'block';
+      progress.value = 0;
+      
+      const backup = {};
+      
+      try {
+        for (let i = 0; i < collections.length; i++) {
+          const collectionName = collections[i];
+          const snapshot = await getDocs(collection(db, collectionName));
+          backup[collectionName] = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          
+          progress.value = ((i + 1) / collections.length) * 100;
+          progressText.textContent = Math.round(progress.value) + '%';
+        }
+
+        const backupStr = JSON.stringify(backup, null, 2);
+        const blob = new Blob([backupStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `backup_${new Date().toISOString()}.json`;
+        a.click();
+        
+        await registrarBackup('manual', 'concluído');
+        atualizarHistorico();
+        
+      } catch (error) {
+        console.error('Erro no backup:', error);
+        await registrarBackup('manual', 'erro');
+      }
+    }
+
+    async function registrarBackup(tipo, status) {
+      try {
+        await addDoc(collection(db, 'backups'), {
+          data: Timestamp.now(),
+          tipo: tipo,
+          status: status
+        });
+      } catch (error) {
+        console.error('Erro ao registrar backup:', error);
+      }
+    }
+
+    async function atualizarHistorico() {
+      const tbody = document.getElementById('historicoBackup');
+      const snapshot = await getDocs(collection(db, 'backups'));
+      
+      tbody.innerHTML = '';
+      snapshot.docs.forEach(doc => {
+        const backup = doc.data();
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${backup.data.toDate().toLocaleString()}</td>
+          <td>${backup.tipo}</td>
+          <td>${backup.status}</td>
+          <td>
+            <button onclick="downloadBackup('${doc.id}')" class="btn-secondary">Download</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    window.onload = atualizarHistorico;
+  </script>
+</body>
+</html>
+
+
+async function backupPermissions() {
+  try {
+    const permissoesSnap = await getDocs(collection(db, "permissoes"));
+    const permissoes = permissoesSnap.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    
+    await addDoc(collection(db, "backup_permissoes"), {
+      data: permissoes,
+      timestamp: Timestamp.now(),
+      tipo: 'AUTOMATICO'
+    });
+    
+    console.log("Backup de permissões realizado com sucesso");
+  } catch (error) {
+    console.error("Erro no backup:", error);
+  }
+}
+
+// Agendar backup diário
+setInterval(backupPermissions, 24 * 60 * 60 * 1000);

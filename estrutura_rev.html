@@ -1,0 +1,1550 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NALITECK - Cadastro de Estrutura e Processo (Explorer)</title>
+  <style>
+    :root {
+      --primary-color: #007bff;
+      --secondary-color: #6c757d;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --warning-color: #ffc107;
+      --info-color: #17a2b8;
+      --light-color: #f8f9fa;
+      --dark-color: #343a40;
+      --background-color: #f0f2f5;
+      --border-color: #dee2e6;
+      --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--background-color);
+      color: var(--dark-color);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    .sap-header {
+      background-color: var(--dark-color);
+      color: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 1000;
+      box-shadow: var(--shadow);
+    }
+
+    .sap-logo {
+      font-size: 1.5em;
+      font-weight: bold;
+    }
+
+    .container {
+      display: flex;
+      margin-top: 60px;
+      height: calc(100vh - 60px);
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .search-panel, .structure-panel {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+      overflow-y: auto;
+    }
+
+    .search-panel {
+      width: 40%;
+      min-width: 300px;
+    }
+
+    .structure-panel {
+      width: 60%;
+      min-width: 400px;
+    }
+
+    .sap-title {
+      font-size: 1.2em;
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: var(--primary-color);
+    }
+
+    .search-box {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .search-box select,
+    .search-box input[type="text"] {
+      padding: 8px;
+      font-size: 14px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      width: 100%;
+    }
+
+    .search-box button {
+      padding: 8px 15px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .product-list {
+      max-height: calc(100vh - 300px);
+      overflow-y: auto;
+    }
+
+    .product-item {
+      padding: 10px;
+      border-bottom: 1px solid var(--border-color);
+      cursor: move;
+      background-color: var(--light-color);
+      transition: background-color 0.2s;
+    }
+
+    .product-item:hover, .product-item.dragging {
+      background-color: #e9ecef;
+    }
+
+    .folder {
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      margin-bottom: 10px;
+      background-color: var(--light-color);
+    }
+
+    .folder-header {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 10px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .folder-dates {
+      font-size: 12px;
+      padding: 5px 10px;
+      background-color: #f1f1f1;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .folder-content {
+      padding: 10px;
+      display: none;
+    }
+
+    .folder-content.open {
+      display: block;
+    }
+
+    .folder-section {
+      margin-bottom: 15px;
+    }
+
+    .section-title {
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: var(--dark-color);
+    }
+
+    .components-list, .operations-list {
+      margin-bottom: 10px;
+    }
+
+    .component, .operation {
+      display: flex;
+      align-items: center;
+      padding: 5px;
+      border-bottom: 1px solid var(--border-color);
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .component span, .operation span {
+      flex-grow: 1;
+    }
+
+    .component.clicked, .operation.clicked, .modal-item.clicked {
+      background-color: #e0f7fa;
+    }
+
+    .component input[type="number"], .operation input[type="number"], .operation select, .operation textarea {
+      padding: 5px;
+      font-size: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+    }
+
+    .sequence-input {
+      width: 50px;
+      text-align: center;
+    }
+
+    .quantidade {
+      width: 80px;
+    }
+
+    .tempo {
+      width: 60px;
+    }
+
+    .operacao, .recurso {
+      width: 200px;
+    }
+
+    .descricao {
+      width: 150px;
+      resize: vertical;
+    }
+
+    .operation-controls {
+      display: flex;
+      gap: 5px;
+    }
+
+    .move-btn {
+      padding: 2px 6px;
+      font-size: 12px;
+      background-color: var(--secondary-color);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .move-btn:hover {
+      background-color: #5a6268;
+    }
+
+    .sap-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .sap-buttons button {
+      padding: 10px 20px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background-color: #0056b3;
+    }
+
+    .btn-success {
+      background-color: var(--success-color);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+
+    .btn-success:hover:not(:disabled) {
+      background-color: #218838;
+    }
+
+    .btn-danger {
+      background-color: var(--danger-color);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background-color: #c82333;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1001;
+    }
+
+    .modal-content {
+      background-color: white;
+      margin: 5% auto;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 1200px;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: var(--shadow);
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 20px;
+      cursor: pointer;
+      color: var(--dark-color);
+    }
+
+    .modal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .modal-grid label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+
+    .modal-grid input, .modal-grid select, .modal-grid textarea {
+      width: 100%;
+      padding: 8px;
+      font-size: 14px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+    }
+
+    .modal-item {
+      padding: 5px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 15px;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    tr:hover {
+      background-color: #f1f1f1;
+      cursor: pointer;
+    }
+
+    tr.selected {
+      background-color: #e0f7fa;
+    }
+
+    canvas {
+      max-width: 100%;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="sap-header">
+    <div class="sap-logo">NALITECK ERP</div>
+    <div>Usuário: <span id="userStatus">Não logado</span> | Empresa: 1000</div>
+  </div>
+
+  <div class="container">
+    <div class="search-panel">
+      <div class="sap-title">Pesquisar Produtos</div>
+      <div class="search-box">
+        <select id="parentProductSelect" onchange="loadStructureForProduct()">
+          <option value="">Selecione o produto pai...</option>
+        </select>
+        <input type="text" id="searchInput" placeholder="Digite para pesquisar componentes...">
+        <button class="btn-primary" onclick="searchProducts()">Pesquisar</button>
+        <button class="btn-primary" onclick="openProductModal()">Cadastrar Novo Produto</button>
+      </div>
+      <div class="product-list" id="productList"></div>
+    </div>
+
+    <div class="structure-panel">
+      <div class="sap-title">Estrutura e Processo de Produtos</div>
+      <div id="structureTree"></div>
+      <div class="sap-buttons">
+        <button class="btn-primary" onclick="openHistoryModal()">Histórico de Estruturas</button>
+        <button class="btn-success" onclick="saveStructure()" disabled>Salvar Estrutura e Processo</button>
+        <button class="btn-primary" onclick="window.location.href='index.html'">Voltar</button>
+        <button class="btn-danger" onclick="deleteCurrentStructure()">Excluir Estrutura</button>
+      </div>
+    </div>
+
+    <div id="historyModal" class="modal" role="dialog" aria-label="Histórico de Estruturas">
+      <div class="modal-content">
+        <span class="close-btn" onclick="closeHistoryModal()">×</span>
+        <div class="sap-title">Histórico de Estruturas</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Descrição</th>
+              <th>Data Criação</th>
+              <th>Última Alteração</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody"></tbody>
+        </table>
+        <button class="btn-primary" onclick="loadSelectedStructure()">Carregar Estrutura Selecionada</button>
+      </div>
+    </div>
+
+    <div id="productModal" class="modal" role="dialog" aria-label="Cadastro de Novo Produto">
+      <div class="modal-content">
+        <span class="close-btn" onclick="closeProductModal()">×</span>
+        <div class="sap-title">Cadastrar Novo Produto</div>
+        <form id="productForm" onsubmit="handleProductSubmit(event)">
+          <div class="modal-grid">
+            <div>
+              <label for="productCode">Código*</label>
+              <input type="text" id="productCode" required maxlength="20">
+            </div>
+            <div>
+              <label for="productDescription">Descrição*</label>
+              <input type="text" id="productDescription" required maxlength="50">
+            </div>
+            <div>
+              <label for="productType">Tipo*</label>
+              <select id="productType" required>
+                <option value="">Selecione...</option>
+                <option value="PA">PA (Produto Acabado)</option>
+                <option value="SP">SP (Semi-acabado)</option>
+                <option value="MP">MP (Matéria-prima)</option>
+                <option value="IN">IN (Insumo)</option>
+              </select>
+            </div>
+            <div>
+              <label for="productUnit">Unidade*</label>
+              <input type="text" id="productUnit" required maxlength="5">
+            </div>
+            <div>
+              <label for="productUnitSecondary">Unidade Secundária</label>
+              <input type="text" id="productUnitSecondary" maxlength="5">
+            </div>
+            <div>
+              <label for="productConversionFactor">Fator de Conversão</label>
+              <input type="number" id="productConversionFactor" step="0.001" min="0">
+            </div>
+            <div>
+              <label for="groupFilter">Filtro Grupo</label>
+              <input type="text" id="groupFilter" oninput="filterGroups()">
+            </div>
+            <div>
+              <label for="productGroup">Grupo</label>
+              <select id="productGroup"></select>
+            </div>
+            <div>
+              <label for="familyFilter">Filtro Família</label>
+              <input type="text" id="familyFilter" oninput="filterFamilies()">
+            </div>
+            <div>
+              <label for="productFamily">Família</label>
+              <select id="productFamily"></select>
+            </div>
+            <div>
+              <label for="productLeadTime">Lead Time (dias)</label>
+              <input type="number" id="productLeadTime" min="0" value="0">
+            </div>
+            <div>
+              <label for="productMinStock">Estoque Mínimo</label>
+              <input type="number" id="productMinStock" step="0.001" min="0" value="0">
+            </div>
+            <div>
+              <label for="productMaxStock">Estoque Máximo</label>
+              <input type="number" id="productMaxStock" step="0.001" min="0" value="0">
+            </div>
+            <div>
+              <label for="productOrderPoint">Ponto de Pedido</label>
+              <input type="number" id="productOrderPoint" step="0.001" min="0" value="0">
+            </div>
+          </div>
+          <button type="submit" class="btn-success">Cadastrar</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="structureModal" class="modal" role="dialog" aria-label="Estrutura e Processo">
+      <div class="modal-content">
+        <span class="close-btn" onclick="closeStructureModal()">×</span>
+        <div class="sap-title">Estrutura e Processo</div>
+        <div class="folder-section structure-section">
+          <div class="section-title">Estrutura (Componentes)</div>
+          <div class="components-list"></div>
+          <button class="btn-primary" onclick="addComponentToModal()">Adicionar Componente</button>
+        </div>
+        <div class="folder-section process-section">
+          <div class="section-title">Processo (Operações)</div>
+          <div class="operations-list"></div>
+          <button class="btn-primary" onclick="addOperationToModal()">Adicionar Operação</button>
+        </div>
+        <button class="btn-success" onclick="saveStructureFromModal()">Salvar</button>
+      </div>
+    </div>
+
+    <div id="drawingModal" class="modal" role="dialog" aria-label="Visualização do Desenho">
+      <div class="modal-content">
+        <span class="close-btn" onclick="closeDrawingModal()">×</span>
+        <div class="sap-title">Visualização do Desenho</div>
+        <canvas id="pdfCanvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { db } from './firebase-config.js';
+    import { 
+      collection, 
+      addDoc, 
+      getDocs,
+      query,
+      where,
+      doc,
+      setDoc,
+      deleteDoc,
+      onSnapshot,
+      enableIndexedDbPersistence
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    enableIndexedDbPersistence(db).catch(err => {
+      console.warn("Erro ao habilitar persistência offline:", err);
+    });
+
+    let produtos = [];
+    let produtosPaisFiltrados = [];
+    let operacoes = [];
+    let recursos = [];
+    let estruturas = [];
+    let grupos = [];
+    let familias = [];
+    let central = [];
+    let usuarioAtual = null;
+    let initialStructureState = null;
+    let hasChanges = false;
+
+    function loadFromCache(key) {
+      const cached = localStorage.getItem(key);
+      return cached ? JSON.parse(cached) : null;
+    }
+
+    function saveToCache(key, data) {
+      localStorage.setItem(key, JSON.stringify(data));
+    }
+
+    window.onload = async function() {
+      usuarioAtual = JSON.parse(localStorage.getItem('currentUser'));
+      if (!usuarioAtual) {
+        window.location.href = 'login.html';
+        return;
+      }
+      document.getElementById('userStatus').textContent = usuarioAtual.nome;
+
+      await carregarDadosIniciais();
+      setupDragAndDrop();
+      searchProducts();
+
+      onSnapshot(collection(db, "estruturas"), (snapshot) => {
+        estruturas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        saveToCache('estruturasCache', estruturas);
+      });
+    };
+
+    async function carregarDadosIniciais() {
+      try {
+        produtos = loadFromCache('produtosCache');
+        if (!produtos) {
+          const q = query(collection(db, "produtos"), where("tipo", "in", ["PA", "SP"]));
+          const produtosSnap = await getDocs(q);
+          produtos = produtosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          saveToCache('produtosCache', produtos);
+        }
+        produtosPaisFiltrados = produtos;
+        populateParentProductSelect();
+
+        grupos = loadFromCache('gruposCache') || [];
+        familias = loadFromCache('familiasCache') || [];
+        if (!grupos.length || !familias.length) {
+          const [gruposSnap, familiasSnap] = await Promise.all([
+            getDocs(collection(db, "grupos")),
+            getDocs(collection(db, "familias"))
+          ]);
+          grupos = gruposSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          familias = familiasSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          saveToCache('gruposCache', grupos);
+          saveToCache('familiasCache', familias);
+        }
+        populateProductModalSelects();
+      } catch (error) {
+        console.error("Erro ao carregar dados iniciais:", error);
+        alert("Erro ao carregar dados iniciais. Tente novamente.");
+      }
+    }
+
+    async function carregarEstruturaEProcesso(productId) {
+      try {
+        operacoes = loadFromCache('operacoesCache');
+        recursos = loadFromCache('recursosCache');
+        central = loadFromCache('centralCache');
+
+        const estrutura = estruturas.find(e => e.produtoPaiId === productId);
+        let componentIds = estrutura?.componentes?.map(comp => comp.componentId) || [];
+
+        if (componentIds.length > 0) {
+          const missingIds = componentIds.filter(id => !produtos.some(p => p.id === id));
+          if (missingIds.length > 0) {
+            const chunkSize = 10; // Firestore "in" query limit
+            for (let i = 0; i < missingIds.length; i += chunkSize) {
+              const chunk = missingIds.slice(i, i + chunkSize);
+              const q = query(collection(db, "produtos"), where(firebase.firestore.FieldPath.documentId(), "in", chunk));
+              const produtosSnap = await getDocs(q);
+              produtos = [...produtos, ...produtosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))];
+            }
+            saveToCache('produtosCache', produtos);
+          }
+        }
+
+        if (!operacoes || !recursos || !central) {
+          const [operacoesSnap, recursosSnap, centralSnap] = await Promise.all([
+            getDocs(collection(db, "operacoes")),
+            getDocs(collection(db, "recursos")),
+            getDocs(collection(db, "central"))
+          ]);
+          operacoes = operacoesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          recursos = recursosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          central = centralSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          saveToCache('operacoesCache', operacoes);
+          saveToCache('recursosCache', recursos);
+          saveToCache('centralCache', central);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar estrutura e processo:", error);
+        alert("Erro ao carregar dados da estrutura.");
+      }
+    }
+
+    function populateParentProductSelect() {
+      const parentSelect = document.getElementById('parentProductSelect');
+      parentSelect.innerHTML = '<option value="">Selecione o produto pai...</option>';
+      const sortedProducts = [...produtosPaisFiltrados].sort((a, b) => a.codigo.localeCompare(b.codigo));
+      sortedProducts.forEach(produto => {
+        parentSelect.innerHTML += `<option value="${produto.id}">${produto.codigo} - ${produto.descricao} (${produto.tipo})</option>`;
+      });
+    }
+
+    function populateProductModalSelects() {
+      const groupSelect = document.getElementById('productGroup');
+      const familySelect = document.getElementById('productFamily');
+      groupSelect.innerHTML = '<option value="">Selecione um grupo</option>';
+      grupos.forEach(grupo => {
+        groupSelect.innerHTML += `<option value="${grupo.codigoGrupo}">${grupo.codigoGrupo} - ${grupo.nomeGrupo}</option>`;
+      });
+      familySelect.innerHTML = '<option value="">Selecione uma família</option>';
+      familias.forEach(familia => {
+        familySelect.innerHTML += `<option value="${familia.codigoFamilia}">${familia.codigoFamilia} - ${familia.nomeFamilia}</option>`;
+      });
+    }
+
+    window.openProductModal = function() {
+      document.getElementById('productModal').style.display = 'block';
+      document.getElementById('productForm').reset();
+      document.getElementById('productLeadTime').value = '0';
+      document.getElementById('productMinStock').value = '0';
+      document.getElementById('productMaxStock').value = '0';
+      document.getElementById('productOrderPoint').value = '0';
+      filterGroups();
+      filterFamilies();
+    };
+
+    window.closeProductModal = function() {
+      document.getElementById('productModal').style.display = 'none';
+    };
+
+    window.filterGroups = function() {
+      const filterText = document.getElementById('groupFilter').value.toLowerCase();
+      const groupSelect = document.getElementById('productGroup');
+      groupSelect.innerHTML = '<option value="">Selecione um grupo</option>';
+      grupos
+        .filter(g => g.codigoGrupo.toLowerCase().includes(filterText) || g.nomeGrupo.toLowerCase().includes(filterText))
+        .sort((a, b) => a.codigoGrupo.localeCompare(b.codigoGrupo))
+        .forEach(grupo => {
+          groupSelect.innerHTML += `<option value="${grupo.codigoGrupo}">${grupo.codigoGrupo} - ${grupo.nomeGrupo}</option>`;
+        });
+    };
+
+    window.filterFamilies = function() {
+      const filterText = document.getElementById('familyFilter').value.toLowerCase();
+      const familySelect = document.getElementById('productFamily');
+      familySelect.innerHTML = '<option value="">Selecione uma família</option>';
+      familias
+        .filter(f => f.codigoFamilia.toLowerCase().includes(filterText) || f.nomeFamilia.toLowerCase().includes(filterText))
+        .sort((a, b) => a.codigoFamilia.localeCompare(b.codigoFamilia))
+        .forEach(familia => {
+          familySelect.innerHTML += `<option value="${familia.codigoFamilia}">${familia.codigoFamilia} - ${familia.nomeFamilia}</option>`;
+        });
+    };
+
+    window.handleProductSubmit = async function(event) {
+      event.preventDefault();
+      const form = document.getElementById('productForm');
+      if (!form.checkValidity()) {
+        alert('Por favor, preencha todos os campos obrigatórios.');
+        return;
+      }
+
+      const newProduct = {
+        codigo: document.getElementById('productCode').value.trim(),
+        descricao: document.getElementById('productDescription').value.trim(),
+        tipo: document.getElementById('productType').value,
+        unidade: document.getElementById('productUnit').value,
+        unidadeSecundaria: document.getElementById('productUnitSecondary').value || null,
+        fatorConversao: parseFloat(document.getElementById('productConversionFactor').value) || null,
+        grupo: document.getElementById('productGroup').value || null,
+        familia: document.getElementById('productFamily').value || null,
+        leadTime: parseInt(document.getElementById('productLeadTime').value) || 0,
+        estoqueMinimo: parseFloat(document.getElementById('productMinStock').value) || 0,
+        estoqueMaximo: parseFloat(document.getElementById('productMaxStock').value) || 0,
+        pontoPedido: parseFloat(document.getElementById('productOrderPoint').value) || 0,
+        dataCadastro: new Date().toISOString()
+      };
+
+      if (produtos.some(p => p.codigo === newProduct.codigo)) {
+        alert('Já existe um produto com este código.');
+        return;
+      }
+
+      try {
+        const docRef = await addDoc(collection(db, "produtos"), newProduct);
+        newProduct.id = docRef.id;
+        produtos.push(newProduct);
+        if (newProduct.tipo === 'PA' || newProduct.tipo === 'SP') {
+          produtosPaisFiltrados.push(newProduct);
+          populateParentProductSelect();
+        }
+        saveToCache('produtosCache', produtos);
+        searchProducts();
+        closeProductModal();
+        alert("Produto cadastrado com sucesso!");
+      } catch (error) {
+        console.error("Erro ao cadastrar produto:", error);
+        alert("Erro ao cadastrar produto: " + error.message);
+      }
+    };
+
+    window.loadStructureForProduct = async function() {
+      const productId = document.getElementById('parentProductSelect').value;
+      const structureTree = document.getElementById('structureTree');
+      const saveButton = document.querySelector('.btn-success');
+
+      structureTree.innerHTML = '';
+      saveButton.disabled = true;
+      initialStructureState = null;
+      hasChanges = false;
+
+      if (!productId) return;
+
+      await carregarEstruturaEProcesso(productId);
+      const produtoPai = produtos.find(p => p.id === productId);
+      const existingStructure = estruturas.find(e => e.produtoPaiId === productId);
+
+      console.log("Produto Pai:", produtoPai);
+      console.log("Estrutura Existente:", existingStructure);
+      console.log("Componentes Esperados:", existingStructure?.componentes);
+
+      if (produtoPai) {
+        const folder = createFolder(produtoPai, existingStructure);
+        if (existingStructure) {
+          populateFolderWithStructure(folder, existingStructure);
+          initialStructureState = JSON.parse(JSON.stringify({
+            componentes: existingStructure.componentes || [],
+            operacoes: existingStructure.operacoes || []
+          }));
+        } else {
+          saveButton.disabled = false;
+        }
+        structureTree.appendChild(folder);
+        setupDragAndDrop();
+        setupChangeListeners(folder);
+      } else {
+        console.error("Produto pai não encontrado para ID:", productId);
+      }
+    };
+
+    function setupChangeListeners(folder) {
+      const saveButton = document.querySelector('.btn-success');
+      function markAsChanged() {
+        hasChanges = true;
+        saveButton.disabled = false;
+      }
+
+      folder.querySelectorAll('.quantidade, .operation input, .operation select, .operation textarea')
+        .forEach(element => element.addEventListener('input', markAsChanged));
+
+      const observer = new MutationObserver(markAsChanged);
+      observer.observe(folder.querySelector('.folder-content'), { childList: true, subtree: true });
+    }
+
+    function populateFolderWithStructure(folder, estrutura) {
+      const componentsList = folder.querySelector('.components-list');
+      const operationsList = folder.querySelector('.operations-list');
+
+      if (estrutura.componentes) {
+        console.log("Populando componentes:", estrutura.componentes);
+        estrutura.componentes.forEach((comp, index) => {
+          const produto = produtos.find(p => p.id === comp.componentId);
+          if (produto) {
+            const documento = central.find(doc => doc.produtoId === produto.id);
+            const pdfLink = documento ? documento.linkPdf : '';
+            const component = document.createElement('div');
+            component.className = 'component';
+            component.dataset.id = produto.id;
+            component.innerHTML = `
+              <input type="number" class="sequence-input" value="${index + 1}" readonly>
+              <span>
+                <span style="color: var(--primary-color);">${produto.codigo}</span> - ${produto.descricao} (${produto.tipo})
+                <button class="btn-primary" style="margin-left: 5px; padding: 4px 8px; font-size: 12px;" onclick="openDrawingModal('${produto.codigo}', '${pdfLink}')">Ver Desenho</button>
+                ${produto.tipo === 'SP' ? `<span style="cursor: pointer; margin-left: 5px;" onclick="showStructureModal('${produto.id}')">+</span>` : ''}
+              </span>
+              <div>
+                <input type="number" class="quantidade" value="${comp.quantidade}" min="0.001" step="0.001">
+                <span>${produto.unidade}</span>
+                <button class="btn-danger" onclick="removeComponent(this)">X</button>
+              </div>
+            `;
+            componentsList.appendChild(component);
+            folder.querySelector('.structure-section').classList.add('open');
+          } else {
+            console.warn(`Produto com ID ${comp.componentId} não encontrado na lista de produtos.`);
+          }
+        });
+      } else {
+        console.log("Nenhum componente encontrado na estrutura:", estrutura);
+      }
+
+      if (estrutura.operacoes) {
+        const sortedOperacoes = [...operacoes].sort((a, b) => a.numero.localeCompare(b.numero));
+        const sortedRecursos = [...recursos].sort((a, b) => a.codigo.localeCompare(b.codigo));
+        estrutura.operacoes.forEach(op => {
+          const operation = document.createElement('div');
+          operation.className = 'operation';
+          operation.innerHTML = `
+            <input type="number" class="sequence-input" value="${op.sequencia}" min="1" step="1">
+            <select class="operacao" required>
+              <option value="">Selecione a operação...</option>
+              ${sortedOperacoes.map(o => `<option value="${o.id}" ${o.id === op.operacaoId ? 'selected' : ''}>${o.numero} - ${o.operacao}</option>`).join('')}
+            </select>
+            <select class="recurso" required>
+              <option value="">Selecione o recurso...</option>
+              ${sortedRecursos.map(r => `<option value="${r.id}" ${r.id === op.recursoId ? 'selected' : ''}>${r.codigo} - ${r.maquina} (${r.setor})</option>`).join('')}
+            </select>
+            <input type="number" class="tempo" value="${op.tempo}" min="0.1" step="0.1">
+            <textarea class="descricao" maxlength="50" rows="1">${op.descricao || ''}</textarea>
+            <div class="operation-controls">
+              <button type="button" class="move-btn" onclick="moveOperation(this, -1)">↑</button>
+              <button type="button" class="move-btn" onclick="moveOperation(this, 1)">↓</button>
+              <button class="btn-danger" onclick="removeOperation(this)">X</button>
+            </div>
+          `;
+          operationsList.appendChild(operation);
+          folder.querySelector('.process-section').classList.add('open');
+        });
+      }
+    }
+
+    window.searchProducts = async function() {
+      const searchTerm = document.getElementById('searchInput').value.toUpperCase();
+      const productList = document.getElementById('productList');
+      productList.innerHTML = '';
+
+      if (!produtos.some(p => p.codigo.toUpperCase().includes(searchTerm) || p.descricao.toUpperCase().includes(searchTerm))) {
+        const q = query(
+          collection(db, "produtos"),
+          where("tipo", "!=", "PA"),
+          where("codigo", ">=", searchTerm),
+          where("codigo", "<=", searchTerm + "\uf8ff"),
+          limit(20)
+        );
+        const snapshot = await getDocs(q);
+        produtos = [...produtos, ...snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))];
+        saveToCache('produtosCache', produtos);
+      }
+
+      const filteredProducts = produtos.filter(p => 
+        (p.codigo.toUpperCase().includes(searchTerm) || p.descricao.toUpperCase().includes(searchTerm)) &&
+        p.tipo !== 'PA'
+      ).slice(0, 20);
+
+      filteredProducts.forEach(produto => {
+        const item = document.createElement('div');
+        item.className = 'product-item';
+        item.draggable = true;
+        item.dataset.id = produto.id;
+        item.innerHTML = `${produto.codigo} - ${produto.descricao} (${produto.tipo})`;
+        productList.appendChild(item);
+      });
+    };
+
+    function setupDragAndDrop() {
+      const productList = document.getElementById('productList');
+      const structureTree = document.getElementById('structureTree');
+
+      function handleDragStart(e) {
+        if (e.target.classList.contains('product-item')) {
+          e.target.classList.add('dragging');
+          e.dataTransfer.setData('text/plain', e.target.dataset.id);
+        }
+      }
+
+      function handleDragEnd(e) {
+        if (e.target.classList.contains('product-item')) {
+          e.target.classList.remove('dragging');
+        }
+      }
+
+      function handleDragOver(e) {
+        if (e.target.closest('.folder')) {
+          e.preventDefault();
+        }
+      }
+
+      function handleDrop(e) {
+        if (e.target.closest('.folder')) {
+          e.preventDefault();
+          e.stopPropagation();
+          const folder = e.target.closest('.folder');
+          const productId = e.dataTransfer.getData('text/plain');
+          const produto = produtos.find(p => p.id === productId);
+          if (produto) addComponentToFolder(folder, produto);
+        }
+      }
+
+      productList.addEventListener('dragstart', handleDragStart);
+      productList.addEventListener('dragend', handleDragEnd);
+      structureTree.addEventListener('dragover', handleDragOver);
+      structureTree.addEventListener('drop', handleDrop);
+    }
+
+    function createFolder(produto, estrutura = null) {
+      const folder = document.createElement('div');
+      folder.className = 'folder';
+      folder.dataset.id = produto.id;
+      const creationDate = estrutura?.dataCriacao ? new Date(estrutura.dataCriacao).toLocaleString('pt-BR') : 'Não criada';
+      const lastUpdateDate = estrutura?.dataUltimaAlteracao ? new Date(estrutura.dataUltimaAlteracao).toLocaleString('pt-BR') : 'Não alterada';
+      folder.innerHTML = `
+        <div class="folder-header" onclick="toggleFolder(this)">
+          <span>${produto.codigo} - ${produto.descricao} (${produto.tipo})</span>
+          <button class="btn-danger" onclick="removeFolder(this, event)">X</button>
+        </div>
+        <div class="folder-dates">
+          Criado em: ${creationDate} | Última alteração: ${lastUpdateDate}
+        </div>
+        <div class="folder-content open">
+          <div class="folder-section structure-section">
+            <div class="section-title">Estrutura (Componentes)</div>
+            <div class="components-list"></div>
+          </div>
+          <div class="folder-section process-section">
+            <div class="section-title">Processo (Operações)</div>
+            <div class="operations-list"></div>
+          </div>
+          <button class="btn-primary" onclick="addOperationToFolder(this)" style="margin-top: 5px;">Adicionar Operação</button>
+        </div>
+      `;
+      return folder;
+    }
+
+    window.toggleFolder = function(header) {
+      header.nextElementSibling.nextElementSibling.classList.toggle('open');
+    };
+
+    function addComponentToFolder(folder, produto) {
+      const componentsList = folder.querySelector('.components-list');
+      if (componentsList.querySelector(`.component[data-id="${produto.id}"]`)) return;
+
+      const component = document.createElement('div');
+      component.className = 'component';
+      component.dataset.id = produto.id;
+      const sequence = componentsList.children.length + 1;
+      component.innerHTML = `
+        <input type="number" class="sequence-input" value="${sequence}" readonly>
+        <span>
+          ${produto.codigo} - ${produto.descricao} (${produto.tipo})
+          ${produto.tipo === 'SP' ? `<span style="cursor: pointer; margin-left: 5px;" onclick="showStructureModal('${produto.id}')">+</span>` : ''}
+        </span>
+        <div>
+          <input type="number" class="quantidade" value="1" min="0.001" step="0.001">
+          <span>${produto.unidade}</span>
+          <button class="btn-danger" onclick="removeComponent(this)">X</button>
+        </div>
+      `;
+      componentsList.appendChild(component);
+      folder.querySelector('.structure-section').classList.add('open');
+      hasChanges = true;
+      document.querySelector('.btn-success').disabled = false;
+    }
+
+    window.addOperationToFolder = function(button) {
+      const folder = button.closest('.folder');
+      const operationsList = folder.querySelector('.operations-list');
+      const operation = document.createElement('div');
+      operation.className = 'operation';
+      const sortedOperacoes = [...operacoes].sort((a, b) => a.numero.localeCompare(b.numero));
+      const sortedRecursos = [...recursos].sort((a, b) => a.codigo.localeCompare(b.codigo));
+      operation.innerHTML = `
+        <input type="number" class="sequence-input" value="${operationsList.children.length + 1}" min="1" step="1">
+        <select class="operacao" required>
+          <option value="">Selecione a operação...</option>
+          ${sortedOperacoes.map(op => `<option value="${op.id}">${op.numero} - ${op.operacao}</option>`).join('')}
+        </select>
+        <select class="recurso" required>
+          <option value="">Selecione o recurso...</option>
+          ${sortedRecursos.map(rec => `<option value="${rec.id}">${rec.codigo} - ${rec.maquina} (${rec.setor})</option>`).join('')}
+        </select>
+        <input type="number" class="tempo" value="1" min="0.1" step="0.1">
+        <textarea class="descricao" maxlength="50" rows="1"></textarea>
+        <div class="operation-controls">
+          <button type="button" class="move-btn" onclick="moveOperation(this, -1)">↑</button>
+          <button type="button" class="move-btn" onclick="moveOperation(this, 1)">↓</button>
+          <button class="btn-danger" onclick="removeOperation(this)">X</button>
+        </div>
+      `;
+      operationsList.appendChild(operation);
+      folder.querySelector('.process-section').classList.add('open');
+      hasChanges = true;
+      document.querySelector('.btn-success').disabled = false;
+    };
+
+    window.moveOperation = function(button, direction) {
+      const operation = button.closest('.operation');
+      const operationsList = operation.parentElement;
+      const operations = Array.from(operationsList.children);
+      const index = operations.indexOf(operation);
+      const newIndex = index + direction;
+
+      if (newIndex >= 0 && newIndex < operations.length) {
+        if (direction === 1) operationsList.insertBefore(operations[newIndex], operation);
+        else operationsList.insertBefore(operation, operations[newIndex]);
+        updateOperationSequences(operationsList);
+        hasChanges = true;
+        document.querySelector('.btn-success').disabled = false;
+      }
+    };
+
+    window.removeFolder = function(button, event) {
+      event.stopPropagation();
+      if (confirm("Tem certeza que deseja remover esta pasta?")) {
+        button.closest('.folder').remove();
+        hasChanges = true;
+        document.querySelector('.btn-success').disabled = false;
+      }
+    };
+
+    window.removeComponent = function(button) {
+      const componentsList = button.closest('.components-list');
+      button.closest('.component').remove();
+      updateComponentSequences(componentsList);
+      hasChanges = true;
+      document.querySelector('.btn-success').disabled = false;
+    };
+
+    function updateComponentSequences(componentsList) {
+      Array.from(componentsList.children).forEach((comp, index) => {
+        comp.querySelector('.sequence-input').value = index + 1;
+      });
+    }
+
+    window.removeOperation = function(button) {
+      const operationsList = button.closest('.operations-list');
+      button.closest('.operation').remove();
+      updateOperationSequences(operationsList);
+      hasChanges = true;
+      document.querySelector('.btn-success').disabled = false;
+    };
+
+    function updateOperationSequences(operationsList) {
+      Array.from(operationsList.children).forEach((op, index) => {
+        op.querySelector('.sequence-input').value = index + 1;
+      });
+    }
+
+    window.saveStructure = async function() {
+      const structureTree = document.getElementById('structureTree');
+      const folders = structureTree.querySelectorAll('.folder');
+      if (folders.length === 0) {
+        alert("Selecione um produto pai para salvar a estrutura!");
+        return;
+      }
+
+      const structureData = [];
+      const processedIds = new Set();
+
+      function processFolder(folder) {
+        const productId = folder.dataset.id;
+        if (processedIds.has(productId)) {
+          throw new Error(`Ciclo detectado no produto ${productId}.`);
+        }
+        processedIds.add(productId);
+
+        const components = [];
+        const componentIds = new Set();
+        folder.querySelectorAll('.component').forEach(comp => {
+          const componentId = comp.dataset.id;
+          const quantidade = parseFloat(comp.querySelector('.quantidade').value) || 1;
+          if (quantidade > 0) {
+            if (componentIds.has(componentId)) return;
+            componentIds.add(componentId);
+            components.push({
+              componentId,
+              quantidade,
+              unidade: produtos.find(p => p.id === componentId).unidade
+            });
+          }
+        });
+
+        const operations = [];
+        folder.querySelectorAll('.operation').forEach(op => {
+          const sequencia = parseInt(op.querySelector('.sequence-input').value) || 1;
+          const operacaoId = op.querySelector('.operacao').value;
+          const recursoId = op.querySelector('.recurso').value;
+          const tempo = parseFloat(op.querySelector('.tempo').value) || 1;
+          const descricao = op.querySelector('.descricao').value;
+          if (operacaoId && recursoId && tempo > 0) {
+            operations.push({ sequencia, operacaoId, recursoId, tempo, descricao: descricao || '' });
+          }
+        });
+
+        const now = new Date().toISOString();
+        const existingStructure = estruturas.find(e => e.produtoPaiId === productId);
+        structureData.push({
+          produtoPaiId: productId,
+          componentes: components,
+          operacoes: operations,
+          dataCriacao: existingStructure?.dataCriacao || now,
+          dataUltimaAlteracao: now
+        });
+      }
+
+      try {
+        folders.forEach(processFolder);
+        for (const item of structureData) {
+          const docRef = doc(db, "estruturas", item.produtoPaiId);
+          await setDoc(docRef, item, { merge: true });
+          const index = estruturas.findIndex(e => e.produtoPaiId === item.produtoPaiId);
+          if (index !== -1) estruturas[index] = { id: docRef.id, ...item };
+          else estruturas.push({ id: docRef.id, ...item });
+        }
+        structureTree.innerHTML = '';
+        document.getElementById('parentProductSelect').value = '';
+        hasChanges = false;
+        document.querySelector('.btn-success').disabled = true;
+        alert("Estrutura salva com sucesso!");
+      } catch (error) {
+        console.error("Erro ao salvar estrutura:", error);
+        alert("Erro ao salvar: " + error.message);
+      }
+    };
+
+    let selectedStructureId = null;
+    window.openHistoryModal = async function() {
+      const historyModal = document.getElementById('historyModal');
+      const historyTableBody = document.getElementById('historyTableBody');
+      historyTableBody.innerHTML = '';
+      selectedStructureId = null;
+
+      const q = query(collection(db, "estruturas"), orderBy("dataUltimaAlteracao", "desc"), limit(50));
+      const snapshot = await getDocs(q);
+      const sortedEstruturas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      if (sortedEstruturas.length === 0) {
+        historyTableBody.innerHTML = '<tr><td colspan="4">Nenhuma estrutura encontrada.</td></tr>';
+      } else {
+        sortedEstruturas.forEach((estrutura, index) => {
+          const produtoPai = produtos.find(p => p.id === estrutura.produtoPaiId);
+          if (!produtoPai) return;
+          const row = document.createElement('tr');
+          row.dataset.structureId = estrutura.id;
+          row.innerHTML = `
+            <td>${produtoPai.codigo || 'N/A'}</td>
+            <td>${produtoPai.descricao || 'Sem descrição'}</td>
+            <td>${estrutura.dataCriacao ? new Date(estrutura.dataCriacao).toLocaleString('pt-BR') : 'N/A'}</td>
+            <td>${estrutura.dataUltimaAlteracao ? new Date(estrutura.dataUltimaAlteracao).toLocaleString('pt-BR') : 'N/A'}</td>
+          `;
+          row.addEventListener('click', () => {
+            historyTableBody.querySelector('.selected')?.classList.remove('selected');
+            row.classList.add('selected');
+            selectedStructureId = estrutura.id;
+          });
+          row.addEventListener('dblclick', () => {
+            selectedStructureId = estrutura.id;
+            loadSelectedStructure();
+          });
+          historyTableBody.appendChild(row);
+        });
+      }
+      historyModal.style.display = 'block';
+    };
+
+    window.closeHistoryModal = function() {
+      document.getElementById('historyModal').style.display = 'none';
+      selectedStructureId = null;
+    };
+
+    window.loadSelectedStructure = function() {
+      if (!selectedStructureId) {
+        alert("Selecione uma estrutura no histórico.");
+        return;
+      }
+      const estrutura = estruturas.find(e => e.id === selectedStructureId);
+      const produtoPai = produtos.find(p => p.id === estrutura.produtoPaiId);
+      const parentSelect = document.getElementById('parentProductSelect');
+      parentSelect.value = produtoPai.id;
+      const structureTree = document.getElementById('structureTree');
+      structureTree.innerHTML = '';
+      const folder = createFolder(produtoPai, estrutura);
+      populateFolderWithStructure(folder, estrutura);
+      structureTree.appendChild(folder);
+      setupDragAndDrop();
+      setupChangeListeners(folder);
+      hasChanges = false;
+      initialStructureState = JSON.parse(JSON.stringify({
+        componentes: estrutura.componentes || [],
+        operacoes: estrutura.operacoes || []
+      }));
+      document.querySelector('.btn-success').disabled = true;
+      closeHistoryModal();
+    };
+
+    window.deleteCurrentStructure = async function() {
+      const structureTree = document.getElementById('structureTree');
+      const folder = structureTree.querySelector('.folder');
+      if (!folder) {
+        alert("Nenhuma estrutura carregada.");
+        return;
+      }
+
+      const productId = folder.dataset.id;
+      const produtoPai = produtos.find(p => p.id === productId);
+      const estrutura = estruturas.find(e => e.produtoPaiId === productId);
+
+      if (!estrutura) {
+        alert(`Nenhuma estrutura registrada para "${produtoPai.codigo} - ${produtoPai.descricao}".`);
+        return;
+      }
+
+      if (estrutura.componentes?.length > 0) {
+        alert("Estrutura possui componentes. Remova-os antes de excluir.");
+        return;
+      }
+
+      if (estruturas.some(e => e.componentes?.some(c => c.componentId === productId) && e.id !== estrutura.id)) {
+        alert("Estrutura é usada em outra estrutura.");
+        return;
+      }
+
+      const ordensSnapshot = await getDocs(query(
+        collection(db, "ordensProducao"),
+        where("produtoId", "==", productId),
+        where("status", "==", "aberta")
+      ));
+      if (!ordensSnapshot.empty) {
+        alert("Existem ordens de produção abertas associadas.");
+        return;
+      }
+
+      if (!confirm(`Deseja excluir a estrutura de "${produtoPai.codigo} - ${produtoPai.descricao}"?`)) return;
+
+      try {
+        await deleteDoc(doc(db, "estruturas", estrutura.id));
+        estruturas = estruturas.filter(e => e.id !== estrutura.id);
+        structureTree.innerHTML = '';
+        document.getElementById('parentProductSelect').value = '';
+        document.querySelector('.btn-success').disabled = true;
+        hasChanges = false;
+        alert("Estrutura excluída com sucesso!");
+      } catch (error) {
+        console.error("Erro ao excluir estrutura:", error);
+        alert("Erro ao excluir: " + error.message);
+      }
+    };
+
+    let currentModalProductId = null;
+    window.showStructureModal = function(productId) {
+      currentModalProductId = productId;
+      const produto = produtos.find(p => p.id === productId);
+      const estrutura = estruturas.find(e => e.produtoPaiId === productId);
+      const modal = document.getElementById('structureModal');
+      modal.querySelector('.sap-title').textContent = `Estrutura e Processo: ${produto.codigo} - ${produto.descricao}`;
+
+      const componentsList = modal.querySelector('.components-list');
+      componentsList.innerHTML = estrutura?.componentes?.length > 0
+        ? estrutura.componentes.map((comp, index) => {
+            const compProduto = produtos.find(p => p.id === comp.componentId);
+            return compProduto ? `
+              <div class="component" data-id="${comp.componentId}">
+                <input type="number" class="sequence-input" value="${index + 1}" readonly>
+                <span>${compProduto.codigo} - ${compProduto.descricao} (${compProduto.tipo})</span>
+                <div>
+                  <input type="number" class="quantidade" value="${comp.quantidade}" min="0.001" step="0.001">
+                  <span>${compProduto.unidade}</span>
+                  <button class="btn-danger" onclick="removeComponentFromModal(this)">X</button>
+                </div>
+              </div>
+            ` : '';
+          }).join('')
+        : '<div class="modal-item">Nenhum componente</div>';
+
+      const operationsList = modal.querySelector('.operations-list');
+      operationsList.innerHTML = estrutura?.operacoes?.length > 0
+        ? estrutura.operacoes.map((op, index) => {
+            const sortedOperacoes = [...operacoes].sort((a, b) => a.numero.localeCompare(b.numero));
+            const sortedRecursos = [...recursos].sort((a, b) => a.codigo.localeCompare(b.codigo));
+            return `
+              <div class="operation">
+                <input type="number" class="sequence-input" value="${op.sequencia}" min="1" step="1">
+                <select class="operacao">
+                  <option value="">Selecione a operação...</option>
+                  ${sortedOperacoes.map(o => `<option value="${o.id}" ${o.id === op.operacaoId ? 'selected' : ''}>${o.numero} - ${o.operacao}</option>`).join('')}
+                </select>
+                <select class="recurso">
+                  <option value="">Selecione o recurso...</option>
+                  ${sortedRecursos.map(r => `<option value="${r.id}" ${r.id === op.recursoId ? 'selected' : ''}>${r.codigo} - ${r.maquina} (${r.setor})</option>`).join('')}
+                </select>
+                <input type="number" class="tempo" value="${op.tempo}" min="0.1" step="0.1">
+                <textarea class="descricao" maxlength="50" rows="1">${op.descricao || ''}</textarea>
+                <div class="operation-controls">
+                  <button class="move-btn" onclick="moveOperationInModal(this, -1)">↑</button>
+                  <button class="move-btn" onclick="moveOperationInModal(this, 1)">↓</button>
+                  <button class="btn-danger" onclick="removeOperationFromModal(this)">X</button>
+                </div>
+              </div>
+            `;
+          }).join('')
+        : '<div class="modal-item">Nenhuma operação</div>';
+
+      modal.style.display = 'block';
+    };
+
+    window.closeStructureModal = function() {
+      document.getElementById('structureModal').style.display = 'none';
+      currentModalProductId = null;
+    };
+
+    window.addComponentToModal = function() {
+      const componentsList = document.querySelector('#structureModal .components-list');
+      const selectOptions = produtos
+        .filter(p => p.id !== currentModalProductId && p.tipo !== 'PA')
+        .map(p => `<option value="${p.id}">${p.codigo} - ${p.descricao} (${p.tipo})</option>`).join('');
+      componentsList.innerHTML += `
+        <div class="component">
+          <input type="number" class="sequence-input" value="${componentsList.children.length + 1}" readonly>
+          <select class="component-select" onchange="updateComponentUnit(this)">
+            <option value="">Selecione o componente...</option>
+            ${selectOptions}
+          </select>
+          <div>
+            <input type="number" class="quantidade" value="1" min="0.001" step="0.001">
+            <span class="unit"></span>
+            <button class="btn-danger" onclick="removeComponentFromModal(this)">X</button>
+          </div>
+        </div>
+      `;
+    };
+
+    window.updateComponentUnit = function(select) {
+      const componentDiv = select.closest('.component');
+      const produto = produtos.find(p => p.id === select.value);
+      componentDiv.querySelector('.unit').textContent = produto ? produto.unidade : '';
+      componentDiv.dataset.id = select.value;
+    };
+
+    window.removeComponentFromModal = function(button) {
+      const componentsList = button.closest('.components-list');
+      button.closest('.component').remove();
+      updateModalComponentSequences(componentsList);
+    };
+
+    function updateModalComponentSequences(componentsList) {
+      Array.from(componentsList.children).forEach((comp, index) => {
+        comp.querySelector('.sequence-input').value = index + 1;
+      });
+    }
+
+    window.addOperationToModal = function() {
+      const operationsList = document.querySelector('#structureModal .operations-list');
+      const sortedOperacoes = [...operacoes].sort((a, b) => a.numero.localeCompare(b.numero));
+      const sortedRecursos = [...recursos].sort((a, b) => a.codigo.localeCompare(b.codigo));
+      operationsList.innerHTML += `
+        <div class="operation">
+          <input type="number" class="sequence-input" value="${operationsList.children.length + 1}" min="1" step="1">
+          <select class="operacao" required>
+            <option value="">Selecione a operação...</option>
+            ${sortedOperacoes.map(op => `<option value="${op.id}">${op.numero} - ${op.operacao}</option>`).join('')}
+          </select>
+          <select class="recurso" required>
+            <option value="">Selecione o recurso...</option>
+            ${sortedRecursos.map(rec => `<option value="${rec.id}">${rec.codigo} - ${rec.maquina} (${rec.setor})</option>`).join('')}
+          </select>
+          <input type="number" class="tempo" value="1" min="0.1" step="0.1">
+          <textarea class="descricao" maxlength="50" rows="1"></textarea>
+          <div class="operation-controls">
+            <button class="move-btn" onclick="moveOperationInModal(this, -1)">↑</button>
+            <button class="move-btn" onclick="moveOperationInModal(this, 1)">↓</button>
+            <button class="btn-danger" onclick="removeOperationFromModal(this)">X</button>
+          </div>
+        </div>
+      `;
+    };
+
+    window.moveOperationInModal = function(button, direction) {
+      const operation = button.closest('.operation');
+      const operationsList = operation.parentElement;
+      const operations = Array.from(operationsList.children);
+      const index = operations.indexOf(operation);
+      const newIndex = index + direction;
+
+      if (newIndex >= 0 && newIndex < operations.length) {
+        if (direction === 1) operationsList.insertBefore(operations[newIndex], operation);
+        else operationsList.insertBefore(operation, operations[newIndex]);
+        updateModalOperationSequences(operationsList);
+      }
+    };
+
+    window.removeOperationFromModal = function(button) {
+      const operationsList = button.closest('.operations-list');
+      button.closest('.operation').remove();
+      updateModalOperationSequences(operationsList);
+    };
+
+    function updateModalOperationSequences(operationsList) {
+      Array.from(operationsList.children).forEach((op, index) => {
+        op.querySelector('.sequence-input').value = index + 1;
+      });
+    }
+
+    window.saveStructureFromModal = async function() {
+      if (!currentModalProductId) {
+        alert("Nenhum produto selecionado.");
+        return;
+      }
+
+      const componentsList = document.querySelector('#structureModal .components-list');
+      const operationsList = document.querySelector('#structureModal .operations-list');
+
+      const components = Array.from(componentsList.children).map(comp => {
+        const componentId = comp.dataset.id || comp.querySelector('.component-select')?.value;
+        const quantidade = parseFloat(comp.querySelector('.quantidade').value) || 1;
+        if (componentId && quantidade > 0) {
+          const produto = produtos.find(p => p.id === componentId);
+          return { componentId, quantidade, unidade: produto.unidade };
+        }
+        return null;
+      }).filter(Boolean);
+
+      const operations = Array.from(operationsList.children).map(op => {
+        const sequencia = parseInt(op.querySelector('.sequence-input').value) || 1;
+        const operacaoId = op.querySelector('.operacao').value;
+        const recursoId = op.querySelector('.recurso').value;
+        const tempo = parseFloat(op.querySelector('.tempo').value) || 1;
+        const descricao = op.querySelector('.descricao').value;
+        if (operacaoId && recursoId && tempo > 0) {
+          return { sequencia, operacaoId, recursoId, tempo, descricao: descricao || '' };
+        }
+        return null;
+      }).filter(Boolean);
+
+      const now = new Date().toISOString();
+      const structureData = {
+        produtoPaiId: currentModalProductId,
+        componentes: components,
+        operacoes: operations,
+        dataCriacao: estruturas.find(e => e.produtoPaiId === currentModalProductId)?.dataCriacao || now,
+        dataUltimaAlteracao: now
+      };
+
+      try {
+        const docRef = doc(db, "estruturas", currentModalProductId);
+        await setDoc(docRef, structureData, { merge: true });
+        const index = estruturas.findIndex(e => e.produtoPaiId === currentModalProductId);
+        if (index !== -1) estruturas[index] = { id: docRef.id, ...structureData };
+        else estruturas.push({ id: docRef.id, ...structureData });
+
+        closeStructureModal();
+        alert("Estrutura salva com sucesso!");
+        if (document.getElementById('parentProductSelect').value === currentModalProductId) {
+          loadStructureForProduct();
+        }
+      } catch (error) {
+        console.error("Erro ao salvar estrutura do modal:", error);
+        alert("Erro ao salvar: " + error.message);
+      }
+    };
+
+    window.openDrawingModal = function(codigo, pdfLink) {
+      if (!pdfLink) {
+        alert(`Nenhum PDF associado ao código ${codigo}.`);
+        return;
+      }
+      window.open(pdfLink, '_blank');
+    };
+
+    window.closeDrawingModal = function() {
+      document.getElementById('drawingModal').style.display = 'none';
+    };
+
+    document.addEventListener('click', function(e) {
+      const component = e.target.closest('.component');
+      const operation = e.target.closest('.operation');
+      const modalItem = e.target.closest('.modal-item');
+      document.querySelectorAll('.component.clicked, .operation.clicked, .modal-item.clicked')
+        .forEach(item => item.classList.remove('clicked'));
+      if (component) component.classList.add('clicked');
+      else if (operation) operation.classList.add('clicked');
+      else if (modalItem) modalItem.classList.add('clicked');
+    });
+  </script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
+  </script>
+</body>
+</html>

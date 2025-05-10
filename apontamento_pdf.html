@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apontamento de Produção</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    .container {
+      width: 95%;
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    h1, h2 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    .search-bar {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+    }
+    .form-row {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    .form-col {
+      flex: 1;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: #555;
+      font-weight: bold;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .back-button {
+      background-color: #6c757d;
+    }
+    .orders-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    .orders-table th,
+    .orders-table td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    .orders-table th {
+      background-color: #f8f9fa;
+      font-weight: bold;
+    }
+    .status-badge {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .status-pendente { background-color: #ffc107; color: #000; }
+    .status-em-producao { background-color: #17a2b8; color: #fff; }
+    .status-concluida { background-color: #28a745; color: #fff; }
+    .status-cancelada { background-color: #dc3545; color: #fff; }
+    .modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  z-index: 1000;
+  overflow: auto; /* Permite rolagem se o conteúdo for maior que a tela */
+}
+
+.modal-content {
+  background-color: #fff;
+  margin: 5% auto; /* Centraliza verticalmente com margem */
+  padding: 20px;
+  width: 80%;
+  max-width: 800px;
+  max-height: 85vh; /* Altura máxima de 85% da viewport */
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column; /* Organiza em coluna */
+  position: relative;
+}
+
+.modal-header {
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-body {
+  flex: 1; /* Ocupa todo o espaço disponível */
+  overflow-y: auto; /* Adiciona barra de rolagem vertical quando necessário */
+  padding: 15px 0;
+  max-height: calc(85vh - 150px); /* Considera o espaço do header e footer */
+}
+
+.modal-footer {
+  padding: 15px 0;
+  border-top: 1px solid #eee;
+  text-align: right;
+}
+/* Personaliza a barra de rolagem */
+.modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+    .close-button {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+    }
+    .materials-list {
+  max-height: 300px;
+  overflow-y: auto;
+  margin: 15px 0;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+    .material-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+    }
+    .material-item:last-child {
+      border-bottom: none;
+    }
+    .material-status {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .status-ok { background-color: #28a745; color: white; }
+    .status-warning { background-color: #ffc107; color: black; }
+    .status-error { background-color: #dc3545; color: white; }
+    .progress-bar {
+      width: 100%;
+      height: 20px;
+      background-color: #f0f0f0;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+    .progress-fill {
+      height: 100%;
+      background-color: #4CAF50;
+      transition: width 0.3s ease;
+    }
+    .modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #fff;
+  margin: 5% auto;
+  padding: 20px;
+  width: 80%;
+  max-width: 800px;
+  max-height: 85vh; /* Altura máxima do modal (85% da viewport) */
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column; /* Organiza em coluna: cabeçalho, corpo, rodapé */
+  position: relative;
+}
+
+.modal-body {
+  flex: 1; /* O corpo ocupa o espaço disponível */
+  max-height: calc(85vh - 120px); /* Altura máxima menos cabeçalho e rodapé */
+  overflow-y: auto; /* Adiciona barra de rolagem vertical */
+  padding-bottom: 10px;
+}
+
+.modal-footer {
+  padding: 10px 0;
+  border-top: 1px solid #ddd;
+  text-align: right;
+}
+
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+}
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px 0;
+  max-height: calc(85vh - 150px);
+  text-align: center; /* Centraliza o canvas */
+}
+
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Apontamento de Produção</h1>
+      <button onclick="window.location.href='index.html'" class="back-button">Voltar</button>
+    </div>
+
+    <div class="search-bar">
+      <div class="form-row">
+        <div class="form-col">
+          <input type="text" id="searchInput" placeholder="Buscar por número da ordem ou produto..." oninput="filterOrders()">
+        </div>
+        <div class="form-col">
+          <select id="statusFilter" onchange="filterOrders()">
+            <option value="">Todos os status</option>
+            <option value="Pendente">Pendente</option>
+            <option value="Em Produção">Em Produção</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <table class="orders-table">
+      <thead>
+        <tr>
+          <th>Ordem</th>
+          <th>Produto</th>
+          <th>Quantidade</th>
+          <th>Produzido</th>
+          <th>Status</th>
+          <th>Data Entrega</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="ordersTableBody">
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal de Apontamento -->
+  <div id="appointmentModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Apontamento de Produção</h2>
+      <span class="close-button" onclick="closeModal()">&times;</span>
+    </div>
+    
+    <div class="modal-body">
+      <div id="orderInfo"></div>
+      <div id="materialsList" class="materials-list"></div>
+      
+      <form id="appointmentForm" onsubmit="submitAppointment(event)">
+        <div class="form-row">
+          <div class="form-col">
+            <label for="quantity">Quantidade Produzida:</label>
+            <input type="number" id="quantity" min="0.001" step="0.001" required>
+          </div>
+          <div class="form-col">
+            <label for="scrap">Quantidade de Refugo:</label>
+            <input type="number" id="scrap" min="0" step="0.001" value="0">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-col">
+            <label for="observations">Observações:</label>
+            <textarea id="observations" rows="3"></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+    
+    <div class="modal-footer">
+      <button type="submit" form="appointmentForm" id="submitButton">Confirmar Apontamento</button>
+    </div>
+  </div>
+</div>
+
+  <script type="module">
+  
+  import { db } from './firebase-config.js';
+  import { 
+    collection, 
+    getDocs,
+    doc,
+    updateDoc,
+    Timestamp,
+    addDoc 
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  let produtos = [];
+  let estruturas = [];
+  let ordensProducao = [];
+  let estoques = [];
+  let currentOrder = null;
+
+  window.onload = async function() {
+    await loadInitialData();
+    await loadOrders();
+  };
+
+  async function loadInitialData() {
+    try {
+      const [produtosSnap, estruturasSnap, ordensSnap, estoquesSnap] = await Promise.all([
+        getDocs(collection(db, "produtos")),
+        getDocs(collection(db, "estruturas")),
+        getDocs(collection(db, "ordensProducao")),
+        getDocs(collection(db, "estoques"))
+      ]);
+
+      produtos = produtosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      estruturas = estruturasSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      ordensProducao = ordensSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      estoques = estoquesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error);
+      alert("Erro ao carregar dados. Por favor, recarregue a página.");
+    }
+  }
+
+  async function loadOrders() {
+  const tableBody = document.getElementById('ordersTableBody');
+  tableBody.innerHTML = '';
+
+  ordensProducao
+    .filter(op => op.status !== 'Concluída' && op.status !== 'Cancelada')
+    .sort((a, b) => {
+      if (a.nivel === b.nivel) {
+        return new Date(b.dataEntrega.seconds * 1000) - new Date(a.dataEntrega.seconds * 1000);
+      }
+      return a.nivel - b.nivel;
+    })
+    .forEach(ordem => {
+      const produto = produtos.find(p => p.id === ordem.produtoId);
+      if (!produto) return;
+
+      const row = document.createElement('tr');
+      const progress = ordem.quantidadeProduzida ? 
+        (ordem.quantidadeProduzida / ordem.quantidade * 100).toFixed(1) : 0;
+
+      row.innerHTML = `
+        <td>${ordem.numero}</td>
+        <td>${produto.codigo} - ${produto.descricao}</td>
+        <td>${ordem.quantidade} ${produto.unidade}</td>
+        <td>
+          ${ordem.quantidadeProduzida || 0} ${produto.unidade}
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: ${progress}%"></div>
+          </div>
+        </td>
+        <td><span class="status-badge status-${ordem.status.toLowerCase().replace(' ', '-')}">${ordem.status}</span></td>
+        <td>${new Date(ordem.dataEntrega.seconds * 1000).toLocaleDateString()}</td>
+        <td>
+          <button onclick="openAppointmentModal('${ordem.id}')">Apontar</button>
+        </td>
+      `;
+      row.style.cursor = 'pointer';
+      row.addEventListener('click', () => showPDFPreview(ordem, produto));
+      tableBody.appendChild(row);
+    });
+}
+
+  window.filterOrders = function() {
+    const searchText = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    
+    const rows = document.getElementById('ordersTableBody').getElementsByTagName('tr');
+    
+    for (const row of rows) {
+      const numero = row.cells[0].textContent.toLowerCase();
+      const produto = row.cells[1].textContent.toLowerCase();
+      const status = row.cells[4].textContent;
+      
+      const matchesSearch = numero.includes(searchText) || produto.includes(searchText);
+      const matchesStatus = !statusFilter || status === statusFilter;
+      
+      row.style.display = matchesSearch && matchesStatus ? '' : 'none';
+    }
+  };
+
+  window.openAppointmentModal = async function(orderId) {
+    currentOrder = ordensProducao.find(op => op.id === orderId);
+    if (!currentOrder) return;
+
+    const produto = produtos.find(p => p.id === currentOrder.produtoId);
+    const estrutura = estruturas.find(e => e.produtoPaiId === currentOrder.produtoId);
+
+    let materialsHtml = '<h3>Materiais Necessários</h3>';
+    let canProduce = true;
+
+    if (estrutura && estrutura.componentes) {
+      for (const componente of estrutura.componentes) {
+        const componenteProduto = produtos.find(p => p.id === componente.componentId);
+        const estoque = estoques.find(e => e.produtoId === componente.componentId);
+        const saldoEstoque = estoque ? estoque.saldo : 0;
+        
+        const quantidadeNecessaria = componente.quantidade;
+        const disponibilidade = (saldoEstoque / quantidadeNecessaria * 100).toFixed(1);
+        let statusClass = 'status-ok';
+        
+        if (saldoEstoque < quantidadeNecessaria) {
+          statusClass = 'status-error';
+          canProduce = false;
+        } else if (saldoEstoque < quantidadeNecessaria * 1.2) {
+          statusClass = 'status-warning';
+        }
+
+        materialsHtml += `
+          <div class="material-item">
+            <div>
+              <strong>${componenteProduto.codigo} - ${componenteProduto.descricao}</strong>
+              <div>Necessário: ${quantidadeNecessaria} ${componenteProduto.unidade}</div>
+              <div>Disponível: ${saldoEstoque} ${componenteProduto.unidade}</div>
+            </div>
+            <span class="material-status ${statusClass}">
+              ${disponibilidade}%
+            </span>
+          </div>
+        `;
+      }
+    }
+
+    document.getElementById('orderInfo').innerHTML = `
+      <div style="margin-bottom: 15px;">
+        <p><strong>Ordem:</strong> ${currentOrder.numero}</p>
+        <p><strong>Produto:</strong> ${produto.codigo} - ${produto.descricao}</p>
+        <p><strong>Quantidade Total:</strong> ${currentOrder.quantidade} ${produto.unidade}</p>
+        <p><strong>Quantidade Já Produzida:</strong> ${currentOrder.quantidadeProduzida || 0} ${produto.unidade}</p>
+      </div>
+    `;
+
+    document.getElementById('materialsList').innerHTML = materialsHtml;
+    document.getElementById('submitButton').disabled = !canProduce;
+    
+    if (!canProduce) {
+      alert('Não há material suficiente para produção!');
+    }
+
+    document.getElementById('appointmentModal').style.display = 'block';
+  };
+
+  window.closeModal = function() {
+    document.getElementById('appointmentModal').style.display = 'none';
+    document.getElementById('appointmentForm').reset();
+    currentOrder = null;
+  };
+
+  window.submitAppointment = async function(event) {
+    event.preventDefault();
+    if (!currentOrder) return;
+
+    const quantidade = parseFloat(document.getElementById('quantity').value);
+    const refugo = parseFloat(document.getElementById('scrap').value) || 0;
+    const observacoes = document.getElementById('observations').value;
+
+    if (!quantidade) {
+      alert('Por favor, informe a quantidade produzida.');
+      return;
+    }
+
+    const totalProduzido = (currentOrder.quantidadeProduzida || 0) + quantidade;
+    if (totalProduzido > currentOrder.quantidade) {
+      alert('A quantidade total produzida não pode exceder a quantidade da ordem.');
+      return;
+    }
+
+    try {
+      const estrutura = estruturas.find(e => e.produtoPaiId === currentOrder.produtoId);
+      if (estrutura && estrutura.componentes) {
+        for (const componente of estrutura.componentes) {
+          const estoque = estoques.find(e => e.produtoId === componente.componentId);
+          const consumoReal = componente.quantidade * quantidade;
+          
+          if (estoque) {
+            const novoSaldo = estoque.saldo - consumoReal;
+            if (novoSaldo < 0) {
+              alert('Erro: Saldo insuficiente de material!');
+              return;
+            }
+            
+            await updateDoc(doc(db, "estoques", estoque.id), {
+              saldo: novoSaldo,
+              ultimaMovimentacao: Timestamp.now()
+            });
+
+            await addDoc(collection(db, "movimentacoesEstoque"), {
+              produtoId: componente.componentId,
+              tipo: 'SAIDA',
+              quantidade: consumoReal,
+              tipoDocumento: 'PRODUCAO',
+              numeroDocumento: currentOrder.numero,
+              observacoes: `Consumo para OP ${currentOrder.numero}`,
+              dataHora: Timestamp.now()
+            });
+          }
+        }
+      }
+
+      const estoqueProduto = estoques.find(e => e.produtoId === currentOrder.produtoId);
+      if (estoqueProduto) {
+        await updateDoc(doc(db, "estoques", estoqueProduto.id), {
+          saldo: estoqueProduto.saldo + quantidade,
+          ultimaMovimentacao: Timestamp.now()
+        });
+      } else {
+        await addDoc(collection(db, "estoques"), {
+          produtoId: currentOrder.produtoId,
+          saldo: quantidade,
+          ultimaMovimentacao: Timestamp.now()
+        });
+      }
+
+      await addDoc(collection(db, "movimentacoesEstoque"), {
+        produtoId: currentOrder.produtoId,
+        tipo: 'ENTRADA',
+        quantidade: quantidade,
+        tipoDocumento: 'PRODUCAO',
+        numeroDocumento: currentOrder.numero,
+        observacoes: `Produção OP ${currentOrder.numero}`,
+        dataHora: Timestamp.now()
+      });
+
+      const novoStatus = totalProduzido >= currentOrder.quantidade ? 'Concluída' : 'Em Produção';
+      await updateDoc(doc(db, "ordensProducao", currentOrder.id), {
+        status: novoStatus,
+        quantidadeProduzida: totalProduzido,
+        quantidadeRefugo: (currentOrder.quantidadeRefugo || 0) + refugo,
+        ultimoApontamento: {
+          quantidade,
+          refugo,
+          observacoes,
+          data: Timestamp.now()
+        }
+      });
+
+      alert('Apontamento registrado com sucesso!');
+      closeModal();
+      await loadInitialData();
+      await loadOrders();
+    } catch (error) {
+      console.error("Erro ao registrar apontamento:", error);
+      alert("Erro ao registrar apontamento.");
+    }
+  };
+
+  // Função para exibir a pré-visualização do PDF
+  window.showPDFPreview = async function(ordem, produto) {
+    const modal = document.getElementById('appointmentModal');
+    const modalBody = document.getElementById('modalBody');
+    const orderInfo = document.getElementById('orderInfo');
+    const materialsList = document.getElementById('materialsList');
+    const appointmentForm = document.getElementById('appointmentForm');
+    const submitButton = document.getElementById('submitButton');
+
+    // Esconder formulário de apontamento
+    appointmentForm.style.display = 'none';
+    submitButton.style.display = 'none';
+    materialsList.style.display = 'none';
+
+    // Definir título do modal
+    document.querySelector('.modal-header h2').textContent = 'Pré-visualização do Desenho';
+
+    // Construir o nome do arquivo PDF (exemplo: "CODIGO_PRODUTO.pdf")
+    const pdfFileName = `${produto.codigo}.pdf`;
+    const pdfPath = `E:\\.shortcut-targets-by-id\\1NmDIFUXt1d43g3LTIw8oGsulfQ8S3aFE\\Eng. Projetos - NALITECK\\CENTRAL DE DOCUMENTOS\\DESENHOS\\${pdfFileName}`;
+
+    orderInfo.innerHTML = `
+      <p><strong>Ordem:</strong> ${ordem.numero}</p>
+      <p><strong>Produto:</strong> ${produto.codigo} - ${produto.descricao}</p>
+      <p><strong>Carregando PDF:</strong> ${pdfFileName}</p>
+    `;
+
+    // Nota: Navegadores não podem acessar diretamente o sistema de arquivos.
+    // Para teste local, você precisará de um servidor ou upload manual.
+    // Aqui, simulamos com um placeholder. Substitua por lógica de servidor se necessário.
+    try {
+      // Exemplo: supondo que o PDF esteja servido em uma URL (ajuste conforme necessário)
+      const pdfUrl = `/desenhos/${pdfFileName}`; // Ajuste para o caminho real servido
+      const loadingTask = pdfjsLib.getDocument(pdfUrl);
+      const pdf = await loadingTask.promise;
+      const page = await pdf.getPage(1); // Primeira página
+      const scale = 0.75;
+      const viewport = page.getViewport({ scale });
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+
+      await page.render({ canvasContext: context, viewport }).promise;
+      orderInfo.appendChild(canvas);
+    } catch (error) {
+      console.error("Erro ao carregar PDF:", error);
+      orderInfo.innerHTML += `<p style="color: red;">Erro ao carregar o PDF. Certifique-se de que o arquivo está acessível.</p>`;
+    }
+
+    modal.style.display = 'block';
+  };
+
+  // Fechar modal ao clicar fora
+  window.onclick = function(event) {
+    const modal = document.getElementById('appointmentModal');
+    if (event.target === modal) {
+      closeModal();
+    }
+  };
+  if (typeof pdfjsLib !== 'undefined') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+</script>
+</body>
+</html>

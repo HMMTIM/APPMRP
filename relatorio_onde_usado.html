@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relatório Onde é Usado</title>
+  <style>
+    @media print {
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      .no-print {
+        display: none;
+      }
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+
+    .container {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      max-width: 210mm;
+      margin: 0 auto;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #333;
+    }
+
+    .logo {
+      max-width: 150px;
+      height: auto;
+    }
+
+    .report-info {
+      text-align: right;
+    }
+
+    .title {
+      text-align: center;
+      margin: 20px 0;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .search-container {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #4CAF50;
+      box-shadow: 0 0 0 2px rgba(74, 175, 80, 0.2);
+    }
+
+    .product-select {
+      flex: 2;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .back-button {
+      background-color: #6c757d;
+    }
+
+    .usage-tree {
+      margin-top: 20px;
+    }
+
+    .usage-item {
+      margin: 10px 0;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background-color: #f8f9fa;
+    }
+
+    .usage-item h3 {
+      margin: 0 0 10px 0;
+      color: #333;
+    }
+
+    .usage-details {
+      margin-left: 20px;
+      padding: 10px;
+      border-left: 3px solid #4CAF50;
+    }
+
+    .usage-info {
+      margin: 5px 0;
+      color: #666;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+      font-style: italic;
+    }
+
+    .summary-box {
+      background-color: #e9ecef;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+
+    .summary-box h3 {
+      margin: 0 0 10px 0;
+      color: #333;
+    }
+
+    .summary-info {
+      display: flex;
+      gap: 20px;
+    }
+
+    .summary-item {
+      flex: 1;
+      text-align: center;
+    }
+
+    .summary-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #4CAF50;
+    }
+
+    .summary-label {
+      color: #666;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="https://www.naliteck.com.br/img/logo.png" alt="Logo" class="logo">
+      <div class="report-info">
+        <div>Data: <span id="currentDate"></span></div>
+        <div>Hora: <span id="currentTime"></span></div>
+      </div>
+    </div>
+
+    <div class="title">Relatório Onde é Usado</div>
+
+    <div class="no-print">
+      <div class="search-container">
+        <input 
+          type="text" 
+          id="searchInput" 
+          class="search-input" 
+          placeholder="Digite o código ou descrição do produto..."
+          oninput="filterProducts(this.value)"
+        >
+        <select id="productSelect" class="product-select" onchange="generateReport()">
+          <option value="">Selecione o produto...</option>
+        </select>
+      </div>
+
+      <button onclick="generateReport()">Gerar Relatório</button>
+      <button onclick="window.print()">Imprimir</button>
+      <button onclick="window.location.href='index.html'" class="back-button">Voltar</button>
+    </div>
+
+    <div id="reportContent">
+      <!-- O conteúdo do relatório será gerado aqui -->
+    </div>
+  </div>
+
+  <script type="module">
+    import { db } from './firebase-config.js';
+    import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    let produtos = [];
+    let estruturas = [];
+
+    window.onload = async function() {
+      await loadData();
+      updateDateTime();
+      updateProductSelect();
+    };
+
+    function updateDateTime() {
+      const now = new Date();
+      document.getElementById('currentDate').textContent = now.toLocaleDateString();
+      document.getElementById('currentTime').textContent = now.toLocaleTimeString();
+    }
+
+    async function loadData() {
+      try {
+        const [produtosSnap, estruturasSnap] = await Promise.all([
+          getDocs(collection(db, "produtos")),
+          getDocs(collection(db, "estruturas"))
+        ]);
+
+        produtos = produtosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        estruturas = estruturasSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      } catch (error) {
+        console.error("Erro ao carregar dados:", error);
+        alert("Erro ao carregar dados. Por favor, recarregue a página.");
+      }
+    }
+
+    window.filterProducts = function(searchText) {
+      const select = document.getElementById('productSelect');
+      const search = searchText.toLowerCase();
+      
+      select.innerHTML = '<option value="">Selecione o produto...</option>';
+      
+      produtos
+        .filter(p => (p.tipo === 'MP' || p.tipo === 'SP') && 
+                    (p.codigo.toLowerCase().includes(search) || 
+                     p.descricao.toLowerCase().includes(search)))
+        .forEach(produto => {
+          select.innerHTML += `<option value="${produto.id}">${produto.codigo} - ${produto.descricao} (${produto.tipo})</option>`;
+        });
+    };
+
+    function updateProductSelect() {
+      const select = document.getElementById('productSelect');
+      select.innerHTML = '<option value="">Selecione o produto...</option>';
+      
+      produtos
+        .filter(p => p.tipo === 'MP' || p.tipo === 'SP')
+        .forEach(produto => {
+          select.innerHTML += `<option value="${produto.id}">${produto.codigo} - ${produto.descricao} (${produto.tipo})</option>`;
+        });
+    }
+
+    // Função recursiva para encontrar todas as estruturas que usam um componente
+    function findUsages(componentId, level = 0, path = []) {
+      const usages = [];
+      
+      estruturas.forEach(estrutura => {
+        if (estrutura.componentes.some(comp => comp.componentId === componentId)) {
+          const produto = produtos.find(p => p.id === estrutura.produtoPaiId);
+          if (!produto) return;
+
+          // Evitar ciclos infinitos
+          if (path.includes(produto.id)) return;
+
+          const usage = {
+            estruturaId: estrutura.id,
+            produto: produto,
+            nivel: level,
+            quantidade: estrutura.componentes.find(comp => comp.componentId === componentId).quantidade,
+            unidade: estrutura.componentes.find(comp => comp.componentId === componentId).unidade
+          };
+
+          usages.push(usage);
+
+          // Procurar recursivamente onde o produto pai é usado
+          const parentUsages = findUsages(produto.id, level + 1, [...path, produto.id]);
+          usages.push(...parentUsages);
+        }
+      });
+
+      return usages;
+    }
+
+    window.generateReport = async function() {
+      const produtoId = document.getElementById('productSelect').value;
+      if (!produtoId) {
+        alert('Por favor, selecione um produto.');
+        return;
+      }
+
+      const produto = produtos.find(p => p.id === produtoId);
+      const usages = findUsages(produtoId);
+
+      // Agrupar por nível para organizar a exibição
+      const usagesByLevel = usages.reduce((acc, usage) => {
+        if (!acc[usage.nivel]) {
+          acc[usage.nivel] = [];
+        }
+        acc[usage.nivel].push(usage);
+        return acc;
+      }, {});
+
+      const reportContent = document.getElementById('reportContent');
+      
+      // Gerar conteúdo do relatório
+      let html = `
+        <div class="summary-box">
+          <h3>Resumo do Produto</h3>
+          <div class="usage-info">
+            <strong>Código:</strong> ${produto.codigo}<br>
+            <strong>Descrição:</strong> ${produto.descricao}<br>
+            <strong>Tipo:</strong> ${produto.tipo}<br>
+            <strong>Unidade:</strong> ${produto.unidade}
+          </div>
+          <div class="summary-info">
+            <div class="summary-item">
+              <div class="summary-value">${usages.length}</div>
+              <div class="summary-label">Total de Utilizações</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-value">${Object.keys(usagesByLevel).length}</div>
+              <div class="summary-label">Níveis de Utilização</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      if (usages.length === 0) {
+        html += `
+          <div class="no-results">
+            Este produto não é utilizado em nenhuma estrutura.
+          </div>
+        `;
+      } else {
+        html += '<div class="usage-tree">';
+        
+        // Ordenar por nível e exibir
+        Object.keys(usagesByLevel)
+          .sort((a, b) => parseInt(a) - parseInt(b))
+          .forEach(level => {
+            html += `<h3>Nível ${level}</h3>`;
+            
+            usagesByLevel[level].forEach(usage => {
+              html += `
+                <div class="usage-item">
+                  <h3>${usage.produto.codigo} - ${usage.produto.descricao}</h3>
+                  <div class="usage-details">
+                    <div class="usage-info">
+                      <strong>Tipo:</strong> ${usage.produto.tipo}
+                    </div>
+                    <div class="usage-info">
+                      <strong>Quantidade Utilizada:</strong> ${usage.quantidade} ${usage.unidade}
+                    </div>
+                  </div>
+                </div>
+              `;
+            });
+          });
+
+        html += '</div>';
+      }
+
+      reportContent.innerHTML = html;
+    };
+  </script>
+</body>
+</html>

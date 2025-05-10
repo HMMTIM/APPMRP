@@ -1,0 +1,118 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auditoria do Sistema</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Auditoria do Sistema</h1>
+      <button class="btn-secondary" onclick="window.location.href='index.html'">Voltar</button>
+    </div>
+
+    <div class="content">
+      <div class="filters">
+        <div class="form-group">
+          <label>Data Inicial</label>
+          <input type="date" id="dataInicial">
+        </div>
+        <div class="form-group">
+          <label>Data Final</label>
+          <input type="date" id="dataFinal">
+        </div>
+        <div class="form-group">
+          <label>Usuário</label>
+          <select id="usuario">
+            <option value="">Todos</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tipo de Operação</label>
+          <select id="operacao">
+            <option value="">Todas</option>
+            <option value="create">Criação</option>
+            <option value="update">Alteração</option>
+            <option value="delete">Exclusão</option>
+          </select>
+        </div>
+        <button onclick="filtrarLogs()" class="btn-primary">Filtrar</button>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Data/Hora</th>
+            <th>Usuário</th>
+            <th>Operação</th>
+            <th>Módulo</th>
+            <th>Descrição</th>
+          </tr>
+        </thead>
+        <tbody id="logsAuditoria"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script type="module">
+    import { db } from './firebase-config.js';
+    import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    async function carregarUsuarios() {
+      const select = document.getElementById('usuario');
+      const snapshot = await getDocs(collection(db, 'usuarios'));
+      snapshot.docs.forEach(doc => {
+        const usuario = doc.data();
+        select.innerHTML += `<option value="${doc.id}">${usuario.nome}</option>`;
+      });
+    }
+
+    async function filtrarLogs() {
+      const dataInicial = document.getElementById('dataInicial').value;
+      const dataFinal = document.getElementById('dataFinal').value;
+      const usuario = document.getElementById('usuario').value;
+      const operacao = document.getElementById('operacao').value;
+
+      let q = query(collection(db, 'logs_auditoria'));
+      
+      if (dataInicial) {
+        q = query(q, where('data', '>=', new Date(dataInicial)));
+      }
+      if (dataFinal) {
+        q = query(q, where('data', '<=', new Date(dataFinal)));
+      }
+      if (usuario) {
+        q = query(q, where('usuarioId', '==', usuario));
+      }
+      if (operacao) {
+        q = query(q, where('operacao', '==', operacao));
+      }
+
+      const snapshot = await getDocs(q);
+      const tbody = document.getElementById('logsAuditoria');
+      tbody.innerHTML = '';
+
+      snapshot.docs.forEach(doc => {
+        const log = doc.data();
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${log.data.toDate().toLocaleString()}</td>
+          <td>${log.usuario}</td>
+          <td>${log.operacao}</td>
+          <td>${log.modulo}</td>
+          <td>${log.descricao}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    window.onload = async () => {
+      await carregarUsuarios();
+      await filtrarLogs();
+    };
+  </script>
+</body>
+</html>
